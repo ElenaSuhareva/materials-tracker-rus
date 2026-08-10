@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7f3">
+  <title>Трекер готовности материалов</title>
+  <style>
+    :root {
+      --ink: #17231d;
+      --muted: #66716a;
+      --line: #dfe6e1;
+      --paper: #fff;
+      --canvas: #f3f6f3;
+      --accent: #176b4d;
+      --accent-soft: #dff2e9;
+      --warn: #8a5b12;
+      --warn-soft: #fff1d6;
+      --done: #216e4b;
+      --done-soft: #dff2e8;
+      --work: #315c9b;
+      --work-soft: #e2ecfb;
+      --shadow: 0 16px 42px rgba(25, 47, 36, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% -10%, #dceee4 0, transparent 28rem),
+        var(--canvas);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+
+    .shell { width: min(1500px, 100%); margin: 0 auto; padding: 42px 28px 56px; }
+    .eyebrow { margin: 0 0 10px; color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    h1 { margin: 0; max-width: 780px; font-size: clamp(30px, 4vw, 54px); line-height: 1.04; letter-spacing: -.045em; }
+    .lede { margin: 16px 0 0; color: var(--muted); font-size: 16px; line-height: 1.55; }
+
+    .summary { display: grid; grid-template-columns: 1.4fr repeat(3, minmax(150px, .6fr)); gap: 12px; margin: 30px 0 18px; }
+    .card { min-height: 112px; padding: 20px; border: 1px solid rgba(255,255,255,.8); border-radius: 18px; background: rgba(255,255,255,.86); box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+    .card-label { color: var(--muted); font-size: 13px; font-weight: 650; }
+    .card-value { display: block; margin-top: 8px; font-size: 30px; font-weight: 800; letter-spacing: -.04em; }
+    .progress-card { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 18px; background: var(--ink); color: #fff; }
+    .progress-card .card-label { color: #b8c9bf; }
+    .progress-card .card-value { color: #fff; }
+    .ring { --p: 0; width: 72px; height: 72px; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(#74d2a7 calc(var(--p) * 1%), #34473d 0); position: relative; }
+    .ring::after { content: ""; width: 52px; height: 52px; border-radius: 50%; background: var(--ink); }
+    .ring span { position: absolute; z-index: 1; font-size: 13px; font-weight: 800; }
+
+    .panel { overflow: hidden; margin-top: 28px; border: 1px solid var(--line); border-radius: 20px; background: var(--paper); box-shadow: var(--shadow); }
+    .toolbar { display: grid; grid-template-columns: minmax(240px, 1fr) 220px 220px auto; gap: 10px; padding: 14px; border-bottom: 1px solid var(--line); }
+    .control { width: 100%; height: 44px; border: 1px solid var(--line); border-radius: 12px; outline: none; background: #f8faf8; transition: border-color .15s, box-shadow .15s; }
+    input.control { padding: 0 14px 0 42px; }
+    select.control { padding: 0 36px 0 13px; cursor: pointer; }
+    .control:focus { border-color: #62a98d; box-shadow: 0 0 0 3px rgba(23,107,77,.12); }
+    .search { position: relative; }
+    .search::before { content: "⌕"; position: absolute; left: 15px; top: 8px; color: var(--muted); font-size: 23px; line-height: 1; transform: rotate(-20deg); pointer-events: none; }
+    .refresh { min-width: 124px; height: 44px; padding: 0 15px; border: 0; border-radius: 12px; background: var(--accent); color: #fff; font-weight: 750; cursor: pointer; transition: transform .15s, background .15s; }
+    .refresh:hover { background: #105c40; }
+    .refresh:active { transform: translateY(1px); }
+    .refresh[disabled] { opacity: .65; cursor: wait; }
+
+    .table-wrap { max-height: 66vh; overflow: auto; scrollbar-color: #bcc8c0 transparent; }
+    table { width: 100%; min-width: 1180px; border-collapse: separate; border-spacing: 0; font-size: 14px; }
+    th { position: sticky; top: 0; z-index: 4; padding: 14px 12px; border-bottom: 1px solid var(--line); background: #f7f9f7; color: #59655e; font-size: 11px; font-weight: 800; letter-spacing: .055em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+    td { padding: 15px 12px; border-bottom: 1px solid #edf0ee; vertical-align: top; }
+    tbody tr { transition: background .12s; }
+    tbody tr:hover { background: #fafcfb; }
+    tbody tr:last-child td { border-bottom: 0; }
+    th:first-child, td:first-child { width: 58px; padding-left: 18px; }
+    th:nth-child(2), td:nth-child(2) { width: 140px; }
+    th:nth-child(3), td:nth-child(3) { width: 360px; }
+    .rule { font-weight: 650; line-height: 1.45; }
+    .section { color: var(--accent); font-weight: 750; }
+    .status { display: inline-flex; align-items: center; min-height: 28px; padding: 5px 9px; border-radius: 999px; background: #eef1ef; color: #536059; font-size: 12px; font-weight: 750; white-space: nowrap; }
+    .status::before { content: ""; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: currentColor; }
+    .status.done { color: var(--done); background: var(--done-soft); }
+    .status.work { color: var(--work); background: var(--work-soft); }
+    .status.plan { color: var(--warn); background: var(--warn-soft); }
+    .row-progress { display: flex; align-items: center; gap: 9px; min-width: 110px; }
+    .bar { flex: 1; height: 7px; overflow: hidden; border-radius: 99px; background: #e7ece9; }
+    .bar > i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
+    .percent { min-width: 36px; font-size: 12px; font-weight: 800; text-align: right; }
+    .empty { display: none; padding: 48px 24px; color: var(--muted); text-align: center; }
+    .foot { display: flex; justify-content: space-between; gap: 16px; padding: 13px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    .source-state { display: inline-flex; align-items: center; gap: 7px; }
+    .source-state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #2d9c69; box-shadow: 0 0 0 3px #dff2e8; }
+    .source-state.offline::before { background: #c08325; box-shadow: 0 0 0 3px #fff1d6; }
+
+    @media (max-width: 900px) {
+      .shell { padding: 30px 18px 40px; }
+      .summary { grid-template-columns: 1fr 1fr; }
+      .progress-card { grid-column: 1 / -1; }
+      .toolbar { grid-template-columns: 1fr 1fr; }
+      .search { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 560px) {
+      .shell { padding: 24px 12px 32px; }
+      .lede { font-size: 14px; }
+      .summary { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 22px; }
+      .card { min-height: 96px; padding: 16px; border-radius: 15px; }
+      .card-value { font-size: 25px; }
+      .progress-card { min-height: 108px; }
+      .toolbar { grid-template-columns: 1fr; }
+      .search { grid-column: auto; }
+      .refresh { width: 100%; }
+      .panel { border-radius: 16px; }
+      .table-wrap { max-height: none; overflow: visible; }
+      table, thead, tbody, tr, td { display: block; min-width: 0; }
+      thead { display: none; }
+      tbody { padding: 6px 12px 12px; }
+      tbody tr { margin-top: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+      tbody tr:hover { background: #fff; }
+      td, th:first-child, td:first-child, th:nth-child(2), td:nth-child(2), th:nth-child(3), td:nth-child(3) { width: auto; padding: 0; border: 0; }
+      td:nth-child(1) { float: right; color: #8b958f; font-size: 12px; }
+      td:nth-child(2) { margin-bottom: 5px; }
+      td:nth-child(3) { padding-right: 28px; }
+      td:nth-child(4) { margin-top: 3px; color: var(--muted); font-size: 12px; }
+      td:nth-child(n+5):nth-child(-n+9) { display: grid; grid-template-columns: 112px 1fr; align-items: center; gap: 10px; margin-top: 10px; }
+      td:nth-child(n+5):nth-child(-n+9)::before { content: attr(data-label); color: var(--muted); font-size: 11px; font-weight: 750; line-height: 1.25; }
+      td:nth-child(10) { margin-top: 15px; padding-top: 13px; border-top: 1px solid #edf0ee; }
+      .row-progress { max-width: 220px; }
+      .foot { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <h1>Трекер готовности материалов</h1>
+
+    <section class="panel">
+      <div class="toolbar">
+        <label class="search"><span hidden>Поиск</span><input class="control" id="search" type="search" placeholder="Найти тему или раздел…" autocomplete="off"></label>
+        <select class="control" id="sectionFilter" aria-label="Фильтр по разделу"><option value="">Все разделы</option></select>
+        <select class="control" id="progressFilter" aria-label="Фильтр по готовности">
+          <option value="">Любая готовность</option>
+          <option value="ready">Готово на 100%</option>
+          <option value="work">В работе</option>
+          <option value="planned">Ещё не начато</option>
+        </select>
+        <button class="refresh" id="refresh" type="button">Обновить</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Раздел</th><th>Правило</th><th>Класс</th><th>Конспект правила</th><th>Конспект заданий</th><th>Доска</th><th>Интерактив</th><th>ДЗ</th><th>Прогресс</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="empty" id="empty">По вашему запросу ничего не найдено.</div>
+      </div>
+      <footer class="foot"><span id="count">Загрузка данных…</span><span class="source-state" id="sourceState">Данные из Google Таблицы</span></footer>
+    </section>
+  </main>
+
+  <script>
+    const SHEET_URL = 'https://docs.google.com/spreadsheets/d/14dy1GHzIJ7B57BFAlw8RRh0PkGQx1NLipsw8wXKPPLw/export?format=csv&gid=841671977';
+    const FALLBACK_CSV = `Трекер готовности материалов · 5 класс,,,,,,,,,
+,,,,,,,,,
+ID,Раздел,Правило,Класс,Конспект правила,Конспект заданий,Доска,Интерактив,ДЗ,Прогресс готовности
+1,Орфография,Правописание проверяемых и непроверяемых безударных гласных в корне слова,5,Готово,Запланировано,Запланировано,Запланировано,Запланировано,20%
+2,Орфография,Правописание проверяемых и непроверяемых согласных в корне слова,5,Запланировано,Запланировано,Запланировано,Запланировано,Запланировано,0%
+3,Орфография,Правописание непроизносимых согласных в корне слова,5,Запланировано,Запланировано,Запланировано,Запланировано,Запланировано,0%
+4,Орфография,"Буквы И, У, А после шипящих",5,Запланировано,Запланировано,Запланировано,Запланировано,Запланировано,0%
+5,Орфография,Разделительные Ъ и Ь,5,Запланировано,Запланировано,Запланировано,Запланировано,Запланировано,0%
+6,Орфография,Раздельное написание предлогов с другими словами,5,Запланировано,Запланировано,Запланировано,Запланировано,Запланировано,0%
+7,Текст,Что мы знаем о тексте,5,Запланировано,Запланировано,Запланировано,Запланировано,Запланировано,0%
+8,Морфология,Части речи,5,Запланировано,Запланировано,Запланировано,Запланировано,Запланировано,0%
+9,Морфология,Глагол,5,Запланировано,Запланировано,Запланировано,Запланировано,Запланировано,0%
+10,Глагол,-ТСЯ и -ТЬСЯ в глаголах,5,Запланировано,Запланировано,Запланировано,Запланировано,Запланировано,0%`;
+
+    const columns = ['ID','Раздел','Правило','Класс','Конспект правила','Конспект заданий','Доска','Интерактив','ДЗ','Прогресс готовности'];
+    const stageColumns = columns.slice(4, 9);
+    const els = Object.fromEntries(['rows','search','sectionFilter','progressFilter','refresh','empty','count','sourceState'].map(id => [id, document.getElementById(id)]));
+    let data = [];
+
+    function parseCSV(text) {
+      const matrix = []; let row = [], cell = '', quoted = false;
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === '"') {
+          if (quoted && text[i + 1] === '"') { cell += '"'; i++; } else quoted = !quoted;
+        } else if (char === ',' && !quoted) { row.push(cell); cell = ''; }
+        else if ((char === '\n' || char === '\r') && !quoted) {
+          if (char === '\r' && text[i + 1] === '\n') i++;
+          row.push(cell); if (row.some(value => value.trim())) matrix.push(row); row = []; cell = '';
+        } else cell += char;
+      }
+      row.push(cell); if (row.some(value => value.trim())) matrix.push(row);
+      const headerIndex = matrix.findIndex(row => row[0]?.trim() === 'ID');
+      if (headerIndex < 0) throw new Error('Не найдена строка заголовков');
+      const headers = matrix[headerIndex].map(value => value.trim());
+      return matrix.slice(headerIndex + 1).filter(row => row[0]?.trim()).map(row => Object.fromEntries(headers.map((header, i) => [header, (row[i] || '').trim()])));
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+    }
+
+    function progressOf(item) {
+      const fromSheet = Number.parseFloat(String(item['Прогресс готовности']).replace(',', '.'));
+      if (Number.isFinite(fromSheet)) return Math.max(0, Math.min(100, fromSheet));
+      const completed = stageColumns.filter(key => /готово|готов|выполнено/i.test(item[key])).length;
+      return Math.round(completed / stageColumns.length * 100);
+    }
+
+    function statusClass(value) {
+      const normalized = String(value).toLowerCase();
+      if (/готово|готов|выполнено/.test(normalized)) return 'done';
+      if (/работе|процесс|редактур|провер/.test(normalized)) return 'work';
+      if (/план/.test(normalized)) return 'plan';
+      return '';
+    }
+
+    function render() {
+      const query = els.search.value.trim().toLowerCase();
+      const section = els.sectionFilter.value;
+      const progress = els.progressFilter.value;
+      const filtered = data.filter(item => {
+        const p = progressOf(item);
+        const matchesText = !query || `${item['Раздел']} ${item['Правило']}`.toLowerCase().includes(query);
+        const matchesSection = !section || item['Раздел'] === section;
+        const matchesProgress = !progress || (progress === 'ready' && p === 100) || (progress === 'work' && p > 0 && p < 100) || (progress === 'planned' && p === 0);
+        return matchesText && matchesSection && matchesProgress;
+      });
+
+      els.rows.innerHTML = filtered.map(item => {
+        const p = progressOf(item);
+        const stages = stageColumns.map(key => `<td data-label="${escapeHTML(key)}"><span class="status ${statusClass(item[key])}">${escapeHTML(item[key] || '—')}</span></td>`).join('');
+        return `<tr><td>${escapeHTML(item.ID)}</td><td class="section">${escapeHTML(item['Раздел'])}</td><td class="rule">${escapeHTML(item['Правило'])}</td><td>${escapeHTML(item['Класс'])}</td>${stages}<td><div class="row-progress" aria-label="Готовность ${p}%"><span class="bar"><i style="width:${p}%"></i></span><span class="percent">${p}%</span></div></td></tr>`;
+      }).join('');
+      els.empty.style.display = filtered.length ? 'none' : 'block';
+      els.count.textContent = `Показано ${filtered.length} из ${data.length} тем`;
+    }
+
+    function updateSections() {
+      const selected = els.sectionFilter.value;
+      const sections = [...new Set(data.map(item => item['Раздел']).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ru'));
+      els.sectionFilter.innerHTML = '<option value="">Все разделы</option>' + sections.map(value => `<option value="${escapeHTML(value)}">${escapeHTML(value)}</option>`).join('');
+      if (sections.includes(selected)) els.sectionFilter.value = selected;
+    }
+
+    async function loadData() {
+      els.refresh.disabled = true;
+      els.refresh.textContent = 'Обновляю…';
+      let live = true;
+      try {
+        const response = await fetch(`${SHEET_URL}&_=${Date.now()}`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        data = parseCSV(await response.text());
+        if (!data.length) throw new Error('Пустая таблица');
+      } catch (error) {
+        live = false;
+        data = parseCSV(FALLBACK_CSV);
+        console.warn('Используется встроенная копия таблицы:', error);
+      }
+      updateSections(); render();
+      els.sourceState.textContent = live ? 'Данные из Google Таблицы' : 'Встроенная копия · нет доступа к сети';
+      els.sourceState.classList.toggle('offline', !live);
+      els.refresh.disabled = false;
+      els.refresh.textContent = 'Обновить';
+    }
+
+    [els.search, els.sectionFilter, els.progressFilter].forEach(control => control.addEventListener('input', render));
+    els.refresh.addEventListener('click', loadData);
+    loadData();
+  </script>
+</body>
+</html>

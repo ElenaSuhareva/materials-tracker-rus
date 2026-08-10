@@ -80,7 +80,6 @@
     .rule { font-weight: 650; line-height: 1.45; }
     .section { color: var(--accent); font-weight: 750; }
     .status { display: inline-flex; align-items: center; min-height: 28px; padding: 5px 9px; border-radius: 999px; background: #eef1ef; color: #536059; font-size: 12px; font-weight: 750; white-space: nowrap; }
-    .status::before { content: ""; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: currentColor; }
     .status.done { color: var(--done); background: var(--done-soft); }
     .status.work { color: var(--work); background: var(--work-soft); }
     .status.plan { color: var(--warn); background: var(--warn-soft); }
@@ -90,10 +89,6 @@
     .percent { min-width: 36px; font-size: 12px; font-weight: 800; text-align: right; }
     .empty { display: none; padding: 48px 24px; color: var(--muted); text-align: center; }
     .foot { display: flex; justify-content: space-between; gap: 16px; padding: 13px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
-    .source-state { display: inline-flex; align-items: center; gap: 7px; }
-    .source-state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #2d9c69; box-shadow: 0 0 0 3px #dff2e8; }
-    .source-state.offline::before { background: #c08325; box-shadow: 0 0 0 3px #fff1d6; }
-
     @media (max-width: 900px) {
       .shell { padding: 30px 18px 40px; }
       .summary { grid-template-columns: 1fr 1fr; }
@@ -155,7 +150,7 @@
         </table>
         <div class="empty" id="empty">По вашему запросу ничего не найдено.</div>
       </div>
-      <footer class="foot"><span id="count">Загрузка данных…</span><span class="source-state" id="sourceState">Данные из Google Таблицы</span></footer>
+      <footer class="foot"><span id="count">Загрузка данных…</span></footer>
     </section>
   </main>
 
@@ -177,7 +172,7 @@ ID,Раздел,Правило,Класс,Конспект правила,Кон
 
     const columns = ['ID','Раздел','Правило','Класс','Конспект правила','Конспект заданий','Доска','Интерактив','ДЗ','Прогресс готовности'];
     const stageColumns = columns.slice(4, 9);
-    const els = Object.fromEntries(['rows','search','sectionFilter','progressFilter','refresh','empty','count','sourceState'].map(id => [id, document.getElementById(id)]));
+    const els = Object.fromEntries(['rows','search','sectionFilter','progressFilter','refresh','empty','count'].map(id => [id, document.getElementById(id)]));
     let data = [];
 
     function parseCSV(text) {
@@ -249,20 +244,16 @@ ID,Раздел,Правило,Класс,Конспект правила,Кон
     async function loadData() {
       els.refresh.disabled = true;
       els.refresh.textContent = 'Обновляю…';
-      let live = true;
       try {
         const response = await fetch(`${SHEET_URL}&_=${Date.now()}`, { cache: 'no-store' });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         data = parseCSV(await response.text());
         if (!data.length) throw new Error('Пустая таблица');
       } catch (error) {
-        live = false;
         data = parseCSV(FALLBACK_CSV);
         console.warn('Используется встроенная копия таблицы:', error);
       }
       updateSections(); render();
-      els.sourceState.textContent = live ? 'Данные из Google Таблицы' : 'Встроенная копия · нет доступа к сети';
-      els.sourceState.classList.toggle('offline', !live);
       els.refresh.disabled = false;
       els.refresh.textContent = 'Обновить';
     }

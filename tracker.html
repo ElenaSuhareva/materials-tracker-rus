@@ -6,189 +6,116 @@
   <meta name="theme-color" content="#f7f5fb">
   <title>Мой трекер материалов</title>
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap");
+    @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap");
 
     :root {
-      color-scheme: light;
-      --ink: #282534;
-      --muted: #777283;
-      --line: #e8e3ed;
-      --canvas: #f8f6fb;
-      --accent: #7161a8;
-      --accent-dark: #574584;
-      --accent-soft: #eee9fb;
-      --danger: #9b4054;
-      --danger-soft: #f9e7eb;
-      --success: #31765c;
-      --success-soft: #ddf3e9;
-      --shadow: 0 22px 60px rgba(68, 54, 92, .11), 0 2px 8px rgba(68, 54, 92, .05);
+      --ink: #282534; --muted: #777283; --line: #ebe7ef; --paper: rgba(255,255,255,.9);
+      --canvas: #f8f6fb; --accent: #7161a8; --accent-dark: #574584; --accent-soft: #eee9fb;
+      --danger: #9b4054; --danger-soft: #f9e7eb; --done: #31765c; --done-soft: #ddf3e9;
+      --work: #526fa7; --work-soft: #e5edfc; --plan: #6f6a75; --plan-soft: #f1f0f3;
+      --shadow: 0 22px 60px rgba(68,54,92,.09), 0 2px 8px rgba(68,54,92,.04);
     }
-
     * { box-sizing: border-box; }
-
-    body {
-      min-height: 100vh;
-      margin: 0;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 8% 4%, #e8e0f7 0, transparent 28rem),
-        radial-gradient(circle at 92% 82%, #dff3ec 0, transparent 25rem),
-        var(--canvas);
-      font-family: "Nunito", "Segoe UI Variable", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    button, input { font: inherit; }
-
-    .workspace {
-      width: min(460px, 100%);
-      padding: 34px;
-      border: 1px solid rgba(255, 255, 255, .9);
-      border-radius: 28px;
-      background: rgba(255, 255, 255, .9);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(30px, 7vw, 42px);
-      font-weight: 600;
-      line-height: 1.05;
-      letter-spacing: -.045em;
-      text-wrap: balance;
-    }
-
-    .intro {
-      margin: 13px 0 27px;
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    .field {
-      display: grid;
-      gap: 7px;
-      margin-top: 16px;
-      color: #5e5868;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .field input {
-      width: 100%;
-      height: 48px;
-      padding: 0 14px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      outline: none;
-      background: #faf9fc;
-      color: var(--ink);
-      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
-    }
-
-    .field input:focus {
-      border-color: #a494d3;
-      background: #fff;
-      box-shadow: 0 0 0 4px rgba(113, 97, 168, .12);
-    }
-
-    .button {
-      width: 100%;
-      height: 48px;
-      margin-top: 22px;
-      border: 0;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #8170b8, #675398);
-      color: #fff;
-      box-shadow: 0 8px 20px rgba(99, 80, 149, .22);
-      font-weight: 750;
-      cursor: pointer;
-      transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
-    }
-
-    .button:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(99, 80, 149, .28); }
-    .button:active { transform: translateY(0); }
-    .button:disabled { opacity: .65; cursor: wait; transform: none; }
-
-    .button.secondary {
-      background: var(--accent-soft);
-      color: var(--accent-dark);
-      box-shadow: none;
-    }
-
-    .message {
-      min-height: 0;
-      margin: 15px 0 0;
-      padding: 11px 13px;
-      border-radius: 12px;
-      background: var(--danger-soft);
-      color: var(--danger);
-      font-size: 13px;
-      font-weight: 650;
-      line-height: 1.4;
-    }
-
-    .message:empty { display: none; }
-
-    .success {
-      display: inline-flex;
-      margin: 22px 0 12px;
-      padding: 7px 11px;
-      border-radius: 10px;
-      background: var(--success-soft);
-      color: var(--success);
-      font-size: 13px;
-      font-weight: 750;
-    }
-
-    .account {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.5;
-      overflow-wrap: anywhere;
-    }
-
-    .account strong { color: var(--ink); }
+    body { margin: 0; min-height: 100vh; color: var(--ink); background: radial-gradient(circle at 6% 2%, #e8e0f7 0, transparent 28rem), radial-gradient(circle at 94% 20%, #dff3ec 0, transparent 25rem), var(--canvas); font-family: "Nunito", "Segoe UI Variable", "Segoe UI", ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
     [hidden] { display: none !important; }
 
-    @media (max-width: 520px) {
-      body { padding: 12px; }
-      .workspace { padding: 25px 20px; border-radius: 21px; }
-    }
+    .auth-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+    .auth-card { width: min(460px, 100%); padding: 34px; border: 1px solid rgba(255,255,255,.9); border-radius: 28px; background: var(--paper); box-shadow: var(--shadow); backdrop-filter: blur(18px); }
+    h1 { margin: 0; font-size: clamp(34px, 4.4vw, 58px); font-weight: 500; line-height: 1; letter-spacing: -.055em; text-wrap: balance; }
+    .auth-card h1 { font-size: clamp(30px, 7vw, 42px); }
+    .intro { margin: 14px 0 26px; color: var(--muted); line-height: 1.55; }
+    .field { display: grid; gap: 7px; margin-top: 16px; color: #5e5868; font-size: 13px; font-weight: 700; }
+    .field input, .control { width: 100%; height: 46px; border: 1px solid var(--line); border-radius: 14px; outline: none; background: #faf9fc; color: var(--ink); transition: border-color .2s, box-shadow .2s, background .2s; }
+    .field input { height: 48px; padding: 0 14px; }
+    .field input:focus, .control:focus { border-color: #a494d3; background: #fff; box-shadow: 0 0 0 4px rgba(113,97,168,.12); }
+    .button { height: 46px; padding: 0 18px; border: 0; border-radius: 14px; background: linear-gradient(135deg,#8170b8,#675398); color: #fff; box-shadow: 0 8px 20px rgba(99,80,149,.22); font-weight: 750; cursor: pointer; transition: transform .2s, box-shadow .2s, opacity .2s; }
+    .auth-card .button { width: 100%; height: 48px; margin-top: 22px; }
+    .button:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(99,80,149,.28); }
+    .button:disabled { opacity: .65; cursor: wait; transform: none; }
+    .button.secondary { background: var(--accent-soft); color: var(--accent-dark); box-shadow: none; }
+    .message { margin: 15px 0 0; padding: 11px 13px; border-radius: 12px; background: var(--danger-soft); color: var(--danger); font-size: 13px; font-weight: 650; line-height: 1.4; }
+    .message:empty { display: none; }
+
+    .shell { width: min(1500px,100%); margin: 0 auto; padding: 40px 28px 64px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+    .account { margin: 14px 0 0; color: var(--muted); }
+    .account strong { color: var(--ink); }
+    .panel { overflow: hidden; margin-top: 34px; border: 1px solid rgba(255,255,255,.9); border-radius: 28px; background: var(--paper); box-shadow: var(--shadow); backdrop-filter: blur(18px); }
+    .toolbar { display: grid; grid-template-columns: minmax(240px,1fr) 220px 220px auto; gap: 10px; padding: 16px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.58); }
+    input.control { padding: 0 14px; }
+    select.control { padding: 0 36px 0 13px; cursor: pointer; }
+    .table-wrap { max-height: 68vh; overflow: auto; scrollbar-color: #c9c1d9 transparent; }
+    table { width: 100%; min-width: 1200px; border-collapse: separate; border-spacing: 0; font-size: 14px; }
+    th { position: sticky; top: 0; z-index: 4; padding: 16px 12px; border-bottom: 1px solid var(--line); background: rgba(249,247,252,.96); color: #777182; backdrop-filter: blur(12px); font-size: 10px; font-weight: 800; letter-spacing: .075em; text-align: left; text-transform: uppercase; white-space: nowrap; }
+    td { padding: 14px 12px; border-bottom: 1px solid #f0edf3; vertical-align: middle; }
+    tbody tr { animation: row-in .4s ease both; transition: background .2s; }
+    tbody tr:hover { background: rgba(238,233,251,.32); }
+    th:first-child, td:first-child { width: 360px; padding-left: 18px; }
+    .rule { font-weight: 650; line-height: 1.48; }
+    .status-select { min-width: 135px; height: 38px; padding: 0 30px 0 10px; border: 1px solid transparent; border-radius: 10px; outline: none; font-size: 12px; font-weight: 720; cursor: pointer; }
+    .status-select.plan { color: var(--plan); border-color: #e2dfe5; background: var(--plan-soft); }
+    .status-select.work { color: var(--work); border-color: #d2ddf5; background: var(--work-soft); }
+    .status-select.done { color: var(--done); border-color: #c8e8da; background: var(--done-soft); }
+    .status-select:disabled { opacity: .65; cursor: wait; }
+    .row-progress { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 9px; min-width: 150px; }
+    .bar { height: 10px; overflow: hidden; border-radius: 99px; background: #eeeaf2; box-shadow: inset 0 1px 2px rgba(50,39,68,.06); }
+    .bar > i { display: block; width: var(--progress); height: 100%; border-radius: inherit; background: linear-gradient(90deg,#9e8ed0,#7964b5); transition: width .35s ease; }
+    .row-progress.complete .bar > i { background: linear-gradient(90deg,#7cc8a7,#469876); }
+    .percent { min-width: 45px; padding: 5px 7px; border-radius: 9px; background: var(--accent-soft); color: var(--accent-dark); font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 800; text-align: center; }
+    .save-state { min-height: 18px; margin-top: 5px; color: var(--muted); font-size: 11px; font-weight: 700; text-align: right; }
+    .save-state.saved { color: var(--done); }
+    .save-state.error { color: var(--danger); }
+    .empty { display: none; padding: 48px 24px; color: var(--muted); text-align: center; }
+    .foot { padding: 13px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    @keyframes row-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 900px) { .shell { padding: 30px 18px 40px; } .toolbar { grid-template-columns: 1fr 1fr; } .toolbar input { grid-column: 1/-1; } }
+    @media (max-width: 560px) { .auth-shell { padding: 12px; } .auth-card { padding: 25px 20px; border-radius: 21px; } .shell { padding: 24px 12px 32px; } .header { flex-direction: column; } .header .button { width: 100%; } .toolbar { grid-template-columns: 1fr; } .toolbar input { grid-column: auto; } .panel { border-radius: 20px; } }
   </style>
 </head>
 <body>
-  <main class="workspace">
-    <section id="loginView" hidden>
+  <div class="auth-shell" id="authCheck"><p>Проверяем авторизацию…</p></div>
+
+  <div class="auth-shell" id="loginView" hidden>
+    <main class="auth-card">
       <h1>Мой трекер материалов</h1>
       <p class="intro">Войдите в своё рабочее пространство.</p>
-
       <form id="loginForm">
-        <label class="field">
-          <span>Логин</span>
-          <input id="email" name="email" type="email" autocomplete="username" required>
-        </label>
-        <label class="field">
-          <span>Пароль</span>
-          <input id="password" name="password" type="password" autocomplete="current-password" required>
-        </label>
+        <label class="field"><span>Логин</span><input id="email" type="email" autocomplete="username" required></label>
+        <label class="field"><span>Пароль</span><input id="password" type="password" autocomplete="current-password" required></label>
         <button class="button" id="loginButton" type="submit">Войти</button>
         <p class="message" id="loginError" role="alert" aria-live="polite"></p>
       </form>
-    </section>
+    </main>
+  </div>
 
-    <section id="accountView" hidden>
-      <h1>Добро пожаловать!</h1>
-      <span class="success">Вход выполнен</span>
-      <p class="account">Логин пользователя:<br><strong id="userLogin"></strong></p>
+  <main class="shell" id="workspace" hidden>
+    <header class="header">
+      <div><h1>Мой трекер материалов</h1><p class="account">Добро пожаловать, <strong id="userLogin"></strong></p></div>
       <button class="button secondary" id="logoutButton" type="button">Выйти</button>
-      <p class="message" id="logoutError" role="alert" aria-live="polite"></p>
+    </header>
+    <p class="message" id="workspaceError" role="alert" aria-live="polite"></p>
+    <section class="panel">
+      <div class="toolbar">
+        <input class="control" id="search" type="search" placeholder="Найти тему или раздел…" autocomplete="off">
+        <select class="control" id="sectionFilter" aria-label="Фильтр по разделу"><option value="">Все разделы</option></select>
+        <select class="control" id="progressFilter" aria-label="Фильтр по готовности">
+          <option value="">Любая готовность</option><option value="ready">Готово на 100%</option><option value="work">В работе</option><option value="planned">Ещё не начато</option>
+        </select>
+        <button class="button" id="refresh" type="button">Обновить</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Правило</th><th>Класс</th><th>Конспект правила</th><th>Конспект заданий</th><th>Доска</th><th>Интерактив</th><th>ДЗ</th><th>Прогресс</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="empty" id="empty">По вашему запросу ничего не найдено.</div>
+      </div>
+      <footer class="foot"><span id="count">Загрузка данных…</span></footer>
     </section>
   </main>
-
   <script type="module" src="./tracker.js"></script>
 </body>
 </html>

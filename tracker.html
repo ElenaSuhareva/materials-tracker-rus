@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5fb">
+  <title>Мой трекер материалов</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap");
+
+    :root {
+      color-scheme: light;
+      --ink: #282534;
+      --muted: #777283;
+      --line: #e8e3ed;
+      --canvas: #f8f6fb;
+      --accent: #7161a8;
+      --accent-dark: #574584;
+      --accent-soft: #eee9fb;
+      --danger: #9b4054;
+      --danger-soft: #f9e7eb;
+      --success: #31765c;
+      --success-soft: #ddf3e9;
+      --shadow: 0 22px 60px rgba(68, 54, 92, .11), 0 2px 8px rgba(68, 54, 92, .05);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 4%, #e8e0f7 0, transparent 28rem),
+        radial-gradient(circle at 92% 82%, #dff3ec 0, transparent 25rem),
+        var(--canvas);
+      font-family: "Nunito", "Segoe UI Variable", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input { font: inherit; }
+
+    .workspace {
+      width: min(460px, 100%);
+      padding: 34px;
+      border: 1px solid rgba(255, 255, 255, .9);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, .9);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 7vw, 42px);
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: -.045em;
+      text-wrap: balance;
+    }
+
+    .intro {
+      margin: 13px 0 27px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-top: 16px;
+      color: #5e5868;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .field input {
+      width: 100%;
+      height: 48px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      outline: none;
+      background: #faf9fc;
+      color: var(--ink);
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+
+    .field input:focus {
+      border-color: #a494d3;
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(113, 97, 168, .12);
+    }
+
+    .button {
+      width: 100%;
+      height: 48px;
+      margin-top: 22px;
+      border: 0;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #8170b8, #675398);
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(99, 80, 149, .22);
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+    }
+
+    .button:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(99, 80, 149, .28); }
+    .button:active { transform: translateY(0); }
+    .button:disabled { opacity: .65; cursor: wait; transform: none; }
+
+    .button.secondary {
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      box-shadow: none;
+    }
+
+    .message {
+      min-height: 0;
+      margin: 15px 0 0;
+      padding: 11px 13px;
+      border-radius: 12px;
+      background: var(--danger-soft);
+      color: var(--danger);
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.4;
+    }
+
+    .message:empty { display: none; }
+
+    .success {
+      display: inline-flex;
+      margin: 22px 0 12px;
+      padding: 7px 11px;
+      border-radius: 10px;
+      background: var(--success-soft);
+      color: var(--success);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .account {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .account strong { color: var(--ink); }
+    [hidden] { display: none !important; }
+
+    @media (max-width: 520px) {
+      body { padding: 12px; }
+      .workspace { padding: 25px 20px; border-radius: 21px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="workspace">
+    <section id="loginView" hidden>
+      <h1>Мой трекер материалов</h1>
+      <p class="intro">Войдите в своё рабочее пространство.</p>
+
+      <form id="loginForm">
+        <label class="field">
+          <span>Логин</span>
+          <input id="email" name="email" type="email" autocomplete="username" required>
+        </label>
+        <label class="field">
+          <span>Пароль</span>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <button class="button" id="loginButton" type="submit">Войти</button>
+        <p class="message" id="loginError" role="alert" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="accountView" hidden>
+      <h1>Добро пожаловать!</h1>
+      <span class="success">Вход выполнен</span>
+      <p class="account">Логин пользователя:<br><strong id="userLogin"></strong></p>
+      <button class="button secondary" id="logoutButton" type="button">Выйти</button>
+      <p class="message" id="logoutError" role="alert" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script type="module" src="./tracker.js"></script>
+</body>
+</html>

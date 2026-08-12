@@ -17,7 +17,7 @@ const db = getFirestore(app);
 const stageFields = ["ruleNotes", "exerciseNotes", "board", "interactive", "homework"];
 const stageLabels = { ruleNotes: "Конспект темы", exerciseNotes: "Конспект заданий", board: "Доска", interactive: "Интерактив", homework: "ДЗ" };
 const scores = { "План": 0, "В работе": 50, "Готово": 100 };
-const elementIds = ["authLoading","loginView","workspace","loginForm","email","password","loginButton","loginError","logoutButton","workspaceError","search","sectionFilter","progressFilter","refresh","addTopicButton","rows","empty","count","topicModal","topicForm","topicModalTitle","topicModalIntro","topicSection","newSectionButton","newSectionField","newSectionName","topicRule","topicGrade","topicError","cancelTopicButton","saveTopicButton","deleteModal","deleteQuestion","deleteError","cancelDeleteButton","confirmDeleteButton","toast"];
+const elementIds = ["authLoading","loginView","workspace","loginForm","email","password","loginButton","loginError","logoutButton","workspaceError","search","sectionFilter","progressFilter","addTopicButton","rows","empty","count","topicModal","topicForm","topicModalTitle","topicModalIntro","topicSection","newSectionButton","newSectionField","newSectionName","topicRule","topicGrade","topicError","cancelTopicButton","saveTopicButton","deleteModal","deleteQuestion","deleteError","cancelDeleteButton","confirmDeleteButton","toast","focusPanel","focusTopic","focusMaterial","focusTimer","crystalScene","finishFocusButton","cancelFocusButton","focusStartModal","focusStartTopic","focusMaterials","cancelFocusStartButton","focusFinishModal","focusFinishForm","focusDuration","focusResult","focusFinishError","continueFocusButton","saveFocusButton","focusParticles"];
 const els = Object.fromEntries(elementIds.map(id => [id, document.getElementById(id)]));
 let materials = [];
 let sections = [];
@@ -27,6 +27,10 @@ let editingDocumentId = null;
 let deletingDocumentId = null;
 let toastTimer = null;
 const rowNumberOffset = 0;
+const focusStorageKey = "materialsTrackerFocusSession";
+let activeFocus = null;
+let pendingFocusItem = null;
+let focusTimerId = null;
 
 const authLoadingTimer = window.setTimeout(() => {
   els.authLoading.hidden = false;
@@ -78,7 +82,8 @@ function render() {
       const value = normalizeStatus(item[field]);
       return `<td><select class="status-select ${statusClass(value)}" data-document="${escapeHTML(item.documentId)}" data-field="${field}" aria-label="${escapeHTML(stageLabels[field])} для ${escapeHTML(item.rule)}">${statusOptions(value)}</select></td>`;
     }).join("");
-    return `<tr style="animation-delay:${Math.min(index * 30,240)}ms" data-document="${escapeHTML(item.documentId)}"><td class="row-number">${rowNumberOffset + index + 1}</td><td class="rule">${escapeHTML(item.rule)}</td><td>${escapeHTML(item.grade)}</td>${statuses}<td><div class="row-progress ${progress === 100 ? "complete" : ""}" style="--progress:${progress}%"><span class="bar"><i></i></span><span class="percent">${progress}%</span></div><div class="save-state" aria-live="polite"></div></td><td class="actions"><button class="icon-button edit-topic" type="button" title="Редактировать" aria-label="Редактировать тему ${escapeHTML(item.rule)}">✎</button> <button class="icon-button delete-topic" type="button" title="Удалить" aria-label="Удалить тему ${escapeHTML(item.rule)}">×</button></td></tr>`;
+    const focused = activeFocus?.documentId === item.documentId ? " focus-active" : "";
+    return `<tr class="${focused}" style="animation-delay:${Math.min(index * 30,240)}ms" data-document="${escapeHTML(item.documentId)}"><td class="row-number">${rowNumberOffset + index + 1}</td><td class="rule">${escapeHTML(item.rule)}</td><td>${escapeHTML(item.grade)}</td>${statuses}<td><div class="row-progress ${progress === 100 ? "complete" : ""}" style="--progress:${progress}%"><span class="bar"><i></i></span><span class="percent">${progress}%</span></div><div class="save-state" aria-live="polite"></div></td><td class="actions"><span class="action-buttons"><button class="icon-button focus-button start-focus" type="button" title="Начать работу" aria-label="Начать работу">▶</button><button class="icon-button edit-topic" type="button" title="Редактировать" aria-label="Редактировать тему ${escapeHTML(item.rule)}"><span class="pencil-icon">✎</span></button><button class="icon-button delete-topic" type="button" title="Удалить" aria-label="Удалить тему ${escapeHTML(item.rule)}">×</button></span></td></tr>`;
   }).join("");
   els.empty.style.display = filtered.length ? "none" : "block";
   els.count.textContent = `Показано ${filtered.length} из ${materials.length} тем`;
@@ -98,8 +103,6 @@ function updateSectionControls(preferred = "") {
 async function loadWorkspaceData() {
   if (!currentUser) return;
   const sequence = ++loadSequence;
-  els.refresh.disabled = true;
-  els.refresh.textContent = "Обновляю…";
   els.workspaceError.textContent = "";
   els.count.textContent = "Загрузка данных из Firestore…";
   try {
@@ -112,12 +115,11 @@ async function loadWorkspaceData() {
     sections = sectionsSnapshot.docs.map(snapshotDoc => String(snapshotDoc.data().name ?? "").trim()).filter(Boolean);
     sortMaterials();
     updateSectionControls();
+    restoreFocusSession();
     render();
   } catch (error) {
     console.error("Не удалось загрузить рабочее пространство:",error);
-    if (currentUser && sequence === loadSequence) { materials = []; sections = []; updateSectionControls(); render(); els.workspaceError.textContent = "Не удалось загрузить данные. Проверьте подключение и права доступа, затем нажмите «Обновить»."; }
-  } finally {
-    if (currentUser && sequence === loadSequence) { els.refresh.disabled = false; els.refresh.textContent = "Обновить"; }
+    if (currentUser && sequence === loadSequence) { materials = []; sections = []; updateSectionControls(); render(); els.workspaceError.textContent = "Не удалось загрузить данные. Проверьте подключение и права доступа и перезагрузите страницу."; }
   }
 }
 
@@ -221,6 +223,11 @@ async function saveTopic(event) {
       await updateDoc(doc(db,"materials",editingDocumentId),{ section,rule,grade });
       const item = materials.find(value => value.documentId === editingDocumentId);
       if (item) Object.assign(item,{ section,rule,grade });
+      if (activeFocus?.documentId === editingDocumentId) {
+        activeFocus.topicName = rule;
+        localStorage.setItem(focusStorageKey,JSON.stringify(activeFocus));
+        els.focusTopic.textContent = rule;
+      }
       updateSectionControls(section);
       render();
       closeTopicModal(true);
@@ -272,6 +279,152 @@ function closeDeleteModal() {
   deletingDocumentId = null;
 }
 
+function formatDuration(milliseconds) {
+  const total = Math.max(0,Math.floor(milliseconds / 1000));
+  const hours = String(Math.floor(total / 3600)).padStart(2,"0");
+  const minutes = String(Math.floor((total % 3600) / 60)).padStart(2,"0");
+  const seconds = String(total % 60).padStart(2,"0");
+  return `${hours}:${minutes}:${seconds}`;
+}
+
+function crystalStage(elapsed) {
+  const minutes = elapsed / 60000;
+  if (minutes >= 30) return 5;
+  if (minutes >= 20) return 4;
+  if (minutes >= 10) return 3;
+  if (minutes >= 5) return 2;
+  return 1;
+}
+
+function updateFocusDisplay() {
+  if (!activeFocus) return;
+  const elapsed = Date.now() - activeFocus.startedAt;
+  els.focusTimer.textContent = formatDuration(elapsed);
+  els.crystalScene.className = `crystal-scene stage-${crystalStage(elapsed)}`;
+}
+
+function startFocusClock() {
+  window.clearInterval(focusTimerId);
+  updateFocusDisplay();
+  focusTimerId = window.setInterval(updateFocusDisplay,1000);
+}
+
+function applyFocusMode() {
+  const enabled = Boolean(activeFocus);
+  document.body.classList.toggle("focus-mode",enabled);
+  els.focusPanel.hidden = !enabled;
+  els.focusParticles.hidden = !enabled;
+  if (enabled) {
+    els.focusTopic.textContent = activeFocus.topicName;
+    els.focusMaterial.textContent = activeFocus.materialName;
+    startFocusClock();
+  } else {
+    window.clearInterval(focusTimerId);
+    focusTimerId = null;
+  }
+  render();
+}
+
+function restoreFocusSession() {
+  if (activeFocus) { applyFocusMode(); return; }
+  try {
+    const saved = JSON.parse(localStorage.getItem(focusStorageKey));
+    if (!saved?.documentId || !stageFields.includes(saved.materialField) || !Number.isFinite(saved.startedAt)) return;
+    activeFocus = saved;
+    applyFocusMode();
+  } catch (error) {
+    console.warn("Не удалось восстановить фокус-сессию:",error);
+    localStorage.removeItem(focusStorageKey);
+  }
+}
+
+function openFocusStart(item) {
+  if (activeFocus) { showToast("Сначала завершите текущую сессию"); return; }
+  pendingFocusItem = item;
+  els.focusStartTopic.textContent = item.rule;
+  els.focusMaterials.innerHTML = stageFields.map(field => `<button class="material-choice" type="button" data-field="${field}">▶ <span>${escapeHTML(stageLabels[field] === "Конспект темы" ? "Конспект правила" : stageLabels[field])}</span></button>`).join("");
+  els.focusStartModal.hidden = false;
+}
+
+function beginFocus(field) {
+  if (!pendingFocusItem || !stageFields.includes(field)) return;
+  const materialName = stageLabels[field] === "Конспект темы" ? "Конспект правила" : stageLabels[field];
+  activeFocus = { documentId:pendingFocusItem.documentId,topicName:pendingFocusItem.rule,materialField:field,materialName,startedAt:Date.now() };
+  localStorage.setItem(focusStorageKey,JSON.stringify(activeFocus));
+  pendingFocusItem = null;
+  els.focusStartModal.hidden = true;
+  els.search.value = "";
+  els.sectionFilter.value = "";
+  els.progressFilter.value = "";
+  applyFocusMode();
+}
+
+function cancelFocus() {
+  if (!activeFocus || !window.confirm("Отменить текущую фокус-сессию? Статус материала не изменится.")) return;
+  window.clearInterval(focusTimerId);
+  focusTimerId = null;
+  els.crystalScene.style.opacity = "0";
+  localStorage.removeItem(focusStorageKey);
+  window.setTimeout(() => {
+    activeFocus = null;
+    els.crystalScene.style.opacity = "";
+    applyFocusMode();
+  },350);
+}
+
+function openFocusFinish() {
+  if (!activeFocus) return;
+  window.clearInterval(focusTimerId);
+  focusTimerId = null;
+  els.focusDuration.textContent = `Продолжительность работы: ${formatDuration(Date.now() - activeFocus.startedAt)}`;
+  els.focusResult.value = "keep";
+  els.focusFinishError.textContent = "";
+  els.focusFinishModal.hidden = false;
+}
+
+function continueFocus() {
+  els.focusFinishModal.hidden = true;
+  startFocusClock();
+}
+
+async function saveFocusResult(event) {
+  event.preventDefault();
+  if (!activeFocus || els.saveFocusButton.disabled) return;
+  const result = els.focusResult.value;
+  const item = materials.find(value => value.documentId === activeFocus.documentId);
+  els.focusFinishError.textContent = "";
+  els.saveFocusButton.disabled = true;
+  els.continueFocusButton.disabled = true;
+  els.saveFocusButton.textContent = "Сохраняю…";
+  try {
+    if (result !== "keep") {
+      if (!item) throw new Error("material-not-found");
+      await updateDoc(doc(db,"materials",activeFocus.documentId),{ [activeFocus.materialField]:result });
+      item[activeFocus.materialField] = result;
+    }
+    localStorage.removeItem(focusStorageKey);
+    els.crystalScene.classList.add("celebrate");
+    document.body.classList.add("focus-celebrate");
+    els.focusFinishModal.hidden = true;
+    window.clearInterval(focusTimerId);
+    focusTimerId = null;
+    window.setTimeout(() => {
+      activeFocus = null;
+      els.crystalScene.classList.remove("celebrate");
+      document.body.classList.remove("focus-celebrate");
+      applyFocusMode();
+      showToast("Сессия завершена");
+    },650);
+  } catch (error) {
+    console.error("Не удалось завершить фокус-сессию:",error);
+    els.focusFinishError.textContent = "Не удалось сохранить результат. Сессия остаётся активной — проверьте подключение и попробуйте ещё раз.";
+  } finally {
+    els.saveFocusButton.disabled = false;
+    els.continueFocusButton.disabled = false;
+    els.saveFocusButton.textContent = "Сохранить результат";
+  }
+}
+
 async function confirmDelete() {
   if (!currentUser || !deletingDocumentId || els.confirmDeleteButton.disabled) return;
   els.confirmDeleteButton.disabled = true;
@@ -280,6 +433,11 @@ async function confirmDelete() {
   els.deleteError.textContent = "";
   try {
     await deleteDoc(doc(db,"materials",deletingDocumentId));
+    if (activeFocus?.documentId === deletingDocumentId) {
+      localStorage.removeItem(focusStorageKey);
+      activeFocus = null;
+      applyFocusMode();
+    }
     materials = materials.filter(item => item.documentId !== deletingDocumentId);
     render();
     els.deleteModal.hidden = true;
@@ -303,25 +461,31 @@ onAuthStateChanged(auth,user => {
   els.workspace.hidden = !user;
   els.loginError.textContent = "";
   if (user) loadWorkspaceData();
-  else { loadSequence++; materials = []; sections = []; els.rows.innerHTML = ""; els.topicModal.hidden = true; els.deleteModal.hidden = true; }
+  else { loadSequence++; materials = []; sections = []; els.rows.innerHTML = ""; els.topicModal.hidden = true; els.deleteModal.hidden = true; els.focusStartModal.hidden = true; els.focusFinishModal.hidden = true; document.body.classList.remove("focus-mode"); els.focusPanel.hidden = true; els.focusParticles.hidden = true; window.clearInterval(focusTimerId); }
 });
 
 els.loginForm.addEventListener("submit",async event => { event.preventDefault(); els.loginError.textContent = ""; els.loginButton.disabled = true; els.loginButton.textContent = "Вхожу…"; try { await signInWithEmailAndPassword(auth,els.email.value.trim(),els.password.value); els.loginForm.reset(); } catch (error) { els.loginError.textContent = loginErrorMessage(error); } finally { els.loginButton.disabled = false; els.loginButton.textContent = "Войти"; } });
 els.logoutButton.addEventListener("click",async () => { els.logoutButton.disabled = true; try { await signOut(auth); } catch (error) { els.workspaceError.textContent = "Не удалось выйти. Попробуйте ещё раз."; } finally { els.logoutButton.disabled = false; } });
 [els.search,els.sectionFilter,els.progressFilter].forEach(control => control.addEventListener("input",render));
-els.refresh.addEventListener("click",loadWorkspaceData);
 els.addTopicButton.addEventListener("click",() => openTopicModal());
 els.newSectionButton.addEventListener("click",() => toggleNewSection());
 els.topicForm.addEventListener("submit",saveTopic);
 els.cancelTopicButton.addEventListener("click",closeTopicModal);
 els.cancelDeleteButton.addEventListener("click",closeDeleteModal);
 els.confirmDeleteButton.addEventListener("click",confirmDelete);
+els.cancelFocusStartButton.addEventListener("click",() => { els.focusStartModal.hidden = true; pendingFocusItem = null; });
+els.focusMaterials.addEventListener("click",event => { const choice = event.target.closest("[data-field]"); if (choice) beginFocus(choice.dataset.field); });
+els.finishFocusButton.addEventListener("click",openFocusFinish);
+els.cancelFocusButton.addEventListener("click",cancelFocus);
+els.continueFocusButton.addEventListener("click",continueFocus);
+els.focusFinishForm.addEventListener("submit",saveFocusResult);
 els.rows.addEventListener("change",event => { if (event.target.matches(".status-select")) changeStatus(event.target); });
 els.rows.addEventListener("click",event => {
   const row = event.target.closest("tr");
   const item = row && materials.find(value => value.documentId === row.dataset.document);
   if (!item) return;
+  if (event.target.closest(".start-focus")) openFocusStart(item);
   if (event.target.closest(".edit-topic")) openTopicModal(item);
   if (event.target.closest(".delete-topic")) openDeleteModal(item);
 });
-document.addEventListener("keydown",event => { if (event.key === "Escape") { if (!els.topicModal.hidden) closeTopicModal(); else if (!els.deleteModal.hidden) closeDeleteModal(); } });
+document.addEventListener("keydown",event => { if (event.key === "Escape") { if (!els.focusFinishModal.hidden) continueFocus(); else if (!els.focusStartModal.hidden) { els.focusStartModal.hidden = true; pendingFocusItem = null; } else if (!els.topicModal.hidden) closeTopicModal(); else if (!els.deleteModal.hidden) closeDeleteModal(); } });

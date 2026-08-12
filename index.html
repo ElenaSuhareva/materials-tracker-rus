@@ -58,18 +58,17 @@
     .ring span { position: absolute; z-index: 1; font-size: 13px; font-weight: 800; }
 
     .panel { overflow: hidden; margin-top: 40px; border: 1px solid rgba(255,255,255,.9); border-radius: 28px; background: var(--paper); box-shadow: var(--shadow); backdrop-filter: blur(18px); }
-    .toolbar { display: grid; grid-template-columns: minmax(240px, 1fr) 220px 220px auto; gap: 10px; padding: 16px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.58); }
+    .toolbar { display: grid; grid-template-columns: minmax(240px, 1fr) 220px 230px; gap: 10px; padding: 16px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.58); }
     .control { width: 100%; height: 46px; border: 1px solid var(--line); border-radius: 14px; outline: none; background: #faf9fc; color: var(--ink); transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
     input.control { padding: 0 14px 0 42px; }
-    select.control { padding: 0 36px 0 13px; cursor: pointer; }
+    select.control { appearance: none; padding: 0 48px 0 13px; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23716b79' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-position: right 17px center; background-size: 16px 16px; background-repeat: no-repeat; }
+    select.control:hover { border-color: #d5cede; background-color: #fff; }
+    select.control:focus { background-color: #fff; }
+    select.control option { background: #fff; color: var(--ink); }
     .control:hover { background: #fff; }
     .control:focus { border-color: #a494d3; background: #fff; box-shadow: 0 0 0 4px rgba(113,97,168,.12); }
     .search { position: relative; }
     .search::before { content: "⌕"; position: absolute; left: 15px; top: 8px; color: var(--muted); font-size: 23px; line-height: 1; transform: rotate(-20deg); pointer-events: none; }
-    .refresh { min-width: 124px; height: 46px; padding: 0 18px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #8170b8, #675398); color: #fff; box-shadow: 0 8px 20px rgba(99,80,149,.22); font-weight: 720; cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, filter .2s ease; }
-    .refresh:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(99,80,149,.28); filter: saturate(1.08); }
-    .refresh:active { transform: translateY(0); }
-    .refresh[disabled] { opacity: .65; cursor: wait; }
 
     .table-wrap { max-height: 68vh; overflow: auto; scrollbar-color: #c9c1d9 transparent; }
     table { width: 100%; min-width: 1260px; border-collapse: separate; border-spacing: 0; font-size: 14px; }
@@ -123,7 +122,6 @@
       .progress-card { min-height: 108px; }
       .toolbar { grid-template-columns: 1fr; }
       .search { grid-column: auto; }
-      .refresh { width: 100%; }
       .panel { margin-top: 24px; border-radius: 20px; }
       .table-wrap { max-height: none; overflow: visible; }
       table, thead, tbody, tr, td { display: block; min-width: 0; }
@@ -158,7 +156,6 @@
           <option value="work">В работе</option>
           <option value="planned">Ещё не начато</option>
         </select>
-        <button class="refresh" id="refresh" type="button">Обновить</button>
       </div>
       <div class="table-wrap">
         <table>

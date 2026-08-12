@@ -46,9 +46,12 @@
     .account { margin: 14px 0 0; color: var(--muted); }
     .account strong { color: var(--ink); }
     .panel { overflow: hidden; margin-top: 34px; border: 1px solid rgba(255,255,255,.9); border-radius: 28px; background: var(--paper); box-shadow: var(--shadow); backdrop-filter: blur(18px); }
-    .toolbar { display: grid; grid-template-columns: minmax(220px,1fr) 200px 220px auto auto; gap: 10px; padding: 16px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.58); }
+    .toolbar { display: grid; grid-template-columns: minmax(220px,1fr) 200px 220px auto; gap: 10px; padding: 16px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.58); }
     input.control { padding: 0 14px; }
-    select.control { padding: 0 36px 0 13px; cursor: pointer; }
+    select.control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23716b79' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-position: right 17px center; background-size: 16px 16px; background-repeat: no-repeat; }
+    select.control { padding: 0 48px 0 13px; cursor: pointer; }
+    select.control:hover { border-color: #d5cede; background-color: #fff; }
+    select.control option { background: #fff; color: var(--ink); font-weight: 650; }
     .table-wrap { max-height: 68vh; overflow: auto; scrollbar-color: #c9c1d9 transparent; }
     table { width: 100%; min-width: 1200px; border-collapse: separate; border-spacing: 0; font-size: 14px; }
     th { position: sticky; top: 0; z-index: 4; padding: 16px 12px; border-bottom: 1px solid var(--line); background: rgba(249,247,252,.96); color: #777182; backdrop-filter: blur(12px); font-size: 10px; font-weight: 800; letter-spacing: .075em; text-align: left; text-transform: uppercase; white-space: nowrap; }
@@ -59,7 +62,9 @@
     th:nth-child(2), td:nth-child(2) { width: 360px; }
     .row-number { color: #918a99; font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; }
     .rule { font-weight: 650; line-height: 1.48; }
-    .status-select { min-width: 135px; height: 38px; padding: 0 30px 0 10px; border: 1px solid transparent; border-radius: 10px; outline: none; font-size: 12px; font-weight: 720; cursor: pointer; }
+    .status-select { appearance: auto; min-width: 142px; height: 40px; padding: 0 10px; border: 1px solid transparent; border-radius: 11px; outline: none; background-image: none; font-size: 12px; font-weight: 720; cursor: pointer; transition: border-color .18s,box-shadow .18s,filter .18s; }
+    .status-select:hover { filter: saturate(1.08); border-color: #cfc7da; }
+    .status-select:focus { border-color: #a494d3; box-shadow: 0 0 0 4px rgba(113,97,168,.12); }
     .status-select.plan { color: var(--plan); border-color: #e2dfe5; background: var(--plan-soft); }
     .status-select.work { color: var(--work); border-color: #d2ddf5; background: var(--work-soft); }
     .status-select.done { color: var(--done); border-color: #c8e8da; background: var(--done-soft); }
@@ -72,9 +77,39 @@
     .save-state { min-height: 18px; margin-top: 5px; color: var(--muted); font-size: 11px; font-weight: 700; text-align: right; }
     .save-state.saved { color: var(--done); }
     .save-state.error { color: var(--danger); }
-    .actions { width: 54px; text-align: center; }
+    .actions { width: 146px; text-align: center; white-space: nowrap; }
+    .action-buttons { display: inline-flex; align-items: center; gap: 9px; }
     .icon-button { width: 36px; height: 36px; display: inline-grid; place-items: center; border: 1px solid var(--line); border-radius: 11px; background: #fff; color: var(--accent-dark); font-size: 17px; cursor: pointer; transition: transform .18s, background .18s, border-color .18s; }
     .icon-button:hover { transform: translateY(-1px); border-color: #cfc5e1; background: var(--accent-soft); }
+    .focus-button { margin-right: 5px; border-color: #cce7dc; background: #eef9f4; color: var(--done); }
+    .pencil-icon { display: inline-block; transform: rotate(-12deg); }
+    body.focus-mode::before { content: ""; position: fixed; inset: 0; z-index: -1; background: rgba(39,34,56,.12); pointer-events: none; transition: opacity .5s; }
+    .focus-particles { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .focus-particles i { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: rgba(167,231,207,.32); filter: blur(1px); animation: drift 12s ease-in-out infinite alternate; }
+    .focus-particles i:nth-child(1) { left: 8%; top: 24%; } .focus-particles i:nth-child(2) { left: 72%; top: 15%; animation-delay: -4s; } .focus-particles i:nth-child(3) { left: 88%; top: 68%; animation-delay: -8s; } .focus-particles i:nth-child(4) { left: 24%; top: 80%; animation-delay: -2s; }
+    body.focus-mode tbody tr:not(.focus-active) { opacity: .45; filter: saturate(.65); }
+    body.focus-mode tbody tr.focus-active { position: relative; z-index: 2; transform: scale(1.008); background: rgba(255,255,255,.98); box-shadow: 0 0 0 2px rgba(134,111,193,.24),0 0 30px rgba(120,105,190,.2),0 0 42px rgba(105,205,168,.16); animation: focus-glow 3.4s ease-in-out infinite; }
+    .focus-panel { position: relative; z-index: 3; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; margin-top: 26px; padding: 18px 20px; border: 1px solid rgba(170,151,219,.45); border-radius: 20px; background: linear-gradient(120deg,rgba(245,240,255,.96),rgba(231,249,241,.94)); box-shadow: 0 15px 42px rgba(79,62,117,.12); }
+    .focus-copy small { display: block; color: var(--accent); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .focus-copy strong { display: block; margin-top: 4px; font-size: 18px; }
+    .focus-copy span { color: var(--muted); font-size: 13px; }
+    .focus-clock { display: flex; align-items: center; gap: 9px; font-size: 25px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .03em; }
+    .live-dot { width: 10px; height: 10px; border-radius: 50%; background: #54aa83; box-shadow: 0 0 0 6px rgba(84,170,131,.12); animation: live-pulse 1.8s ease-in-out infinite; }
+    .focus-actions { display: flex; gap: 8px; }
+    .crystal-scene { position: relative; width: 72px; height: 64px; display: grid; place-items: end center; transition: opacity .35s ease; }
+    .crystal { --scale: .62; position: relative; width: 27px; height: 43px; transform: scale(var(--scale)); transform-origin: bottom; clip-path: polygon(50% 0,88% 25%,100% 72%,50% 100%,0 72%,12% 25%); background: linear-gradient(135deg,#ab93e8 0 34%,#70cbb0 35% 66%,#6652a5 67%); filter: drop-shadow(0 0 8px rgba(119,95,185,.42)); transition: transform .8s,filter .8s; animation: crystal-pulse 2.8s ease-in-out infinite; }
+    .crystal::after { content: ""; position: absolute; inset: 17% 27% 20% 48%; background: rgba(255,255,255,.35); clip-path: polygon(0 0,100% 23%,58% 100%); opacity: 0; transition: opacity .6s; }
+    .crystal-scene.stage-2 .crystal { --scale: .78; } .crystal-scene.stage-3 .crystal { --scale: .9; filter: drop-shadow(0 0 13px rgba(119,95,185,.58)); } .crystal-scene.stage-3 .crystal::after { opacity: 1; }
+    .crystal-baby { position: absolute; right: 8px; bottom: 4px; width: 15px; height: 24px; clip-path: polygon(50% 0,100% 35%,88% 100%,12% 100%,0 35%); background: linear-gradient(135deg,#8ed8c0,#755fb6); opacity: 0; transform: scale(.4); transform-origin: bottom; transition: opacity .7s,transform .7s; }
+    .crystal-scene.stage-4 .crystal-baby { opacity: 1; transform: scale(.72); } .crystal-scene.stage-5 .crystal-baby { opacity: 1; transform: scale(1); box-shadow: 0 0 12px rgba(112,203,176,.4); }
+    .crystal-scene.stage-5::after { content: ""; position: absolute; left: 6px; bottom: 2px; width: 13px; height: 20px; clip-path: polygon(50% 0,100% 35%,84% 100%,16% 100%,0 35%); background: linear-gradient(135deg,#b5a2ed,#68c3aa); }
+    .crystal-scene.celebrate { animation: crystal-flash .7s ease-out; }
+    body.focus-celebrate .focus-particles i { animation: scatter .7s ease-out forwards; }
+    body.focus-celebrate .focus-particles i:nth-child(2) { --scatter-x: -45px; --scatter-y: -32px; } body.focus-celebrate .focus-particles i:nth-child(3) { --scatter-x: 24px; --scatter-y: 42px; } body.focus-celebrate .focus-particles i:nth-child(4) { --scatter-x: -30px; --scatter-y: 38px; }
+    .focus-materials { display: grid; gap: 8px; margin-top: 18px; }
+    .material-choice { display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 13px; cursor: pointer; transition: background .18s,border-color .18s; }
+    .material-choice:hover { border-color: #cfc5e1; background: var(--accent-soft); }
+    .finish-duration { margin: 16px 0; padding: 14px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-dark); font-weight: 750; }
     .toast { position: fixed; right: 24px; bottom: 24px; z-index: 30; max-width: min(380px,calc(100vw - 32px)); padding: 12px 16px; border-radius: 13px; background: var(--ink); color: #fff; box-shadow: var(--shadow); font-size: 13px; font-weight: 750; animation: toast-in .25s ease both; }
     .modal { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(40,37,52,.38); backdrop-filter: blur(5px); }
     .modal-card { width: min(520px,100%); max-height: calc(100vh - 40px); overflow: auto; padding: 28px; border: 1px solid rgba(255,255,255,.9); border-radius: 24px; background: #fff; box-shadow: 0 28px 80px rgba(40,37,52,.22); }
@@ -92,10 +127,18 @@
     @keyframes row-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+    @keyframes drift { to { transform: translate(45px,-30px) scale(1.5); opacity: .35; } }
+    @keyframes live-pulse { 50% { transform: scale(.72); opacity: .65; } }
+    @keyframes crystal-pulse { 50% { filter: drop-shadow(0 0 14px rgba(112,203,176,.58)); } }
+    @keyframes focus-glow { 50% { box-shadow: 0 0 0 2px rgba(134,111,193,.34),0 0 38px rgba(120,105,190,.26),0 0 50px rgba(105,205,168,.2); } }
+    @keyframes crystal-flash { 45% { filter: brightness(1.8); transform: scale(1.12); } }
+    @keyframes scatter { to { transform: translate(var(--scatter-x,35px),var(--scatter-y,-45px)) scale(.2); opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; } }
 
     @media (max-width: 1050px) { .toolbar { grid-template-columns: 1fr 1fr; } .toolbar input { grid-column: 1/-1; } }
     @media (max-width: 900px) { .shell { padding: 30px 18px 40px; } }
-    @media (max-width: 560px) { .auth-shell { padding: 12px; } .auth-card { padding: 25px 20px; border-radius: 21px; } .shell { padding: 24px 12px 32px; } .header { flex-direction: column; } .header .button { width: 100%; } .toolbar { grid-template-columns: 1fr; } .toolbar input { grid-column: auto; } .panel { border-radius: 20px; } .section-picker { grid-template-columns: 1fr; } .modal { padding: 10px; } .modal-card { padding: 22px 18px; border-radius: 20px; } .modal-actions { flex-direction: column-reverse; } .modal-actions .button { width: 100%; } .toast { right: 16px; bottom: 16px; } }
+    @media (max-width: 700px) { .focus-panel { grid-template-columns: auto 1fr; } .focus-actions { grid-column: 1/-1; } }
+    @media (max-width: 560px) { .auth-shell { padding: 12px; } .auth-card { padding: 25px 20px; border-radius: 21px; } .shell { padding: 24px 12px 32px; } .header { flex-direction: column; } .header .button { width: 100%; } .toolbar { grid-template-columns: 1fr; } .toolbar input { grid-column: auto; } .panel { border-radius: 20px; } .section-picker { grid-template-columns: 1fr; } .modal { padding: 10px; } .modal-card { padding: 22px 18px; border-radius: 20px; } .modal-actions { flex-direction: column-reverse; } .modal-actions .button { width: 100%; } .toast { right: 16px; bottom: 16px; } .focus-panel { grid-template-columns: 1fr; text-align: center; } .crystal-scene { margin: auto; } .focus-clock,.focus-actions { justify-content: center; } }
   </style>
 </head>
 <body>
@@ -120,6 +163,11 @@
       <button class="button secondary" id="logoutButton" type="button">Выйти</button>
     </header>
     <p class="message" id="workspaceError" role="alert" aria-live="polite"></p>
+    <section class="focus-panel" id="focusPanel" hidden>
+      <div class="crystal-scene stage-1" id="crystalScene"><span class="crystal"></span><span class="crystal-baby"></span></div>
+      <div class="focus-copy"><small>Сейчас работаю</small><strong id="focusTopic"></strong><span id="focusMaterial"></span></div>
+      <div><div class="focus-clock"><span class="live-dot" aria-hidden="true"></span><time id="focusTimer">00:00:00</time></div><div class="focus-actions"><button class="button" id="finishFocusButton" type="button">Завершить</button><button class="button secondary" id="cancelFocusButton" type="button">Отменить</button></div></div>
+    </section>
     <section class="panel">
       <div class="toolbar">
         <input class="control" id="search" type="search" placeholder="Найти тему…" autocomplete="off">
@@ -127,7 +175,6 @@
         <select class="control" id="progressFilter" aria-label="Фильтр по готовности">
           <option value="">Все статусы</option><option value="ready">Готово на 100%</option><option value="work">В работе</option><option value="planned">Ещё не начато</option>
         </select>
-        <button class="button" id="refresh" type="button">Обновить</button>
         <button class="button" id="addTopicButton" type="button">+ Добавить тему</button>
       </div>
       <div class="table-wrap">
@@ -165,6 +212,16 @@
       <div class="modal-actions"><button class="button secondary" id="cancelDeleteButton" type="button">Отмена</button><button class="button danger" id="confirmDeleteButton" type="button">Удалить</button></div>
     </div>
   </div>
+
+  <div class="modal" id="focusStartModal" role="dialog" aria-modal="true" aria-labelledby="focusStartTitle" hidden>
+    <div class="modal-card"><h2 id="focusStartTitle">Над чем работаем?</h2><p class="intro" id="focusStartTopic"></p><div class="focus-materials" id="focusMaterials"></div><div class="modal-actions"><button class="button secondary" id="cancelFocusStartButton" type="button">Отмена</button></div></div>
+  </div>
+
+  <div class="modal" id="focusFinishModal" role="dialog" aria-modal="true" aria-labelledby="focusFinishTitle" hidden>
+    <form class="modal-card" id="focusFinishForm"><h2 id="focusFinishTitle">Завершить сессию</h2><p class="finish-duration" id="focusDuration"></p><label class="field"><span>Результат работы</span><select class="control" id="focusResult"><option value="keep">Оставить текущий статус</option><option value="В работе">Поставить «В работе»</option><option value="Готово">Поставить «Готово»</option></select></label><p class="message" id="focusFinishError" role="alert" aria-live="polite"></p><div class="modal-actions"><button class="button secondary" id="continueFocusButton" type="button">Продолжить работу</button><button class="button" id="saveFocusButton" type="submit">Сохранить результат</button></div></form>
+  </div>
+
+  <div class="focus-particles" id="focusParticles" hidden><i></i><i></i><i></i><i></i></div>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <script type="module" src="./tracker.js"></script>

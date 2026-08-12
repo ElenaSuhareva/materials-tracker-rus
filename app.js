@@ -42,7 +42,7 @@ const statusScores = {
   "готово": 100
 };
 const els = Object.fromEntries(
-  ["rows", "search", "sectionFilter", "progressFilter", "refresh", "empty", "count"]
+  ["rows", "search", "sectionFilter", "progressFilter", "empty", "count"]
     .map(id => [id, document.getElementById(id)])
 );
 let data = [];
@@ -125,8 +125,6 @@ function updateSections() {
 }
 
 async function loadData() {
-  els.refresh.disabled = true;
-  els.refresh.textContent = "Обновляю…";
   els.count.textContent = "Загрузка данных из Firestore…";
   loadError = "";
 
@@ -149,15 +147,12 @@ async function loadData() {
     console.error("Не удалось загрузить коллекцию materials из Firestore:", error);
     data = [];
     updateSections();
-    loadError = "Не удалось загрузить данные из Firestore. Проверьте подключение и права доступа, затем нажмите «Обновить».";
+    loadError = "Не удалось загрузить данные из Firestore. Проверьте подключение и права доступа, затем перезагрузите страницу.";
   } finally {
     render();
-    els.refresh.disabled = false;
-    els.refresh.textContent = "Обновить";
   }
 }
 
 [els.search, els.sectionFilter, els.progressFilter]
   .forEach(control => control.addEventListener("input", render));
-els.refresh.addEventListener("click", loadData);
 loadData();

@@ -30,7 +30,7 @@ const fields = [
 ];
 const stageFields = fields.slice(4);
 const stageLabels = {
-  ruleNotes: "Конспект правила",
+  ruleNotes: "Конспект темы",
   exerciseNotes: "Конспект заданий",
   board: "Доска",
   interactive: "Интерактив",
@@ -47,6 +47,7 @@ const els = Object.fromEntries(
 );
 let data = [];
 let loadError = "";
+const rowNumberOffset = 0;
 
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -99,7 +100,7 @@ function render() {
     const stages = stageFields.map(field => (
       `<td data-label="${escapeHTML(stageLabels[field])}"><span class="status ${statusClass(item[field])}">${escapeHTML(item[field] || "—")}</span></td>`
     )).join("");
-    return `<tr style="animation-delay:${Math.min(index * 35, 280)}ms"><td>${escapeHTML(item.id)}</td><td class="section">${escapeHTML(item.section)}</td><td class="rule">${escapeHTML(item.rule)}</td><td>${escapeHTML(item.grade)}</td>${stages}<td><div class="row-progress ${progressValue === 100 ? "complete" : ""}" style="--progress:${progressValue}%" aria-label="Готовность ${progressValue}%"><span class="bar"><i></i></span><span class="percent">${progressValue}%</span></div></td></tr>`;
+    return `<tr style="animation-delay:${Math.min(index * 35, 280)}ms"><td class="row-number">${rowNumberOffset + index + 1}</td><td class="section">${escapeHTML(item.section)}</td><td class="rule">${escapeHTML(item.rule)}</td><td>${escapeHTML(item.grade)}</td>${stages}<td><div class="row-progress ${progressValue === 100 ? "complete" : ""}" style="--progress:${progressValue}%" aria-label="Готовность ${progressValue}%"><span class="bar"><i></i></span><span class="percent">${progressValue}%</span></div></td></tr>`;
   }).join("");
 
   if (loadError) {

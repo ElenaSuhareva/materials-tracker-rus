@@ -79,6 +79,7 @@
     tbody tr:hover { background: rgba(238,233,251,.32); }
     tbody tr:last-child td { border-bottom: 0; }
     th:first-child, td:first-child { width: 58px; padding-left: 18px; }
+    .row-number { color: #918a99; font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; }
     th:nth-child(2), td:nth-child(2) { width: 140px; }
     th:nth-child(3), td:nth-child(3) { width: 360px; }
     .rule { font-weight: 650; line-height: 1.48; letter-spacing: -.008em; }
@@ -149,10 +150,10 @@
 
     <section class="panel">
       <div class="toolbar">
-        <label class="search"><span hidden>Поиск</span><input class="control" id="search" type="search" placeholder="Найти тему или раздел…" autocomplete="off"></label>
+        <label class="search"><span hidden>Поиск</span><input class="control" id="search" type="search" placeholder="Найти тему…" autocomplete="off"></label>
         <select class="control" id="sectionFilter" aria-label="Фильтр по разделу"><option value="">Все разделы</option></select>
         <select class="control" id="progressFilter" aria-label="Фильтр по готовности">
-          <option value="">Любая готовность</option>
+          <option value="">Все статусы</option>
           <option value="ready">Готово на 100%</option>
           <option value="work">В работе</option>
           <option value="planned">Ещё не начато</option>
@@ -161,7 +162,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>ID</th><th>Раздел</th><th>Правило</th><th>Класс</th><th>Конспект правила</th><th>Конспект заданий</th><th>Доска</th><th>Интерактив</th><th>ДЗ</th><th>Прогресс</th></tr></thead>
+          <thead><tr><th>№</th><th>Раздел</th><th>Тема</th><th>Класс</th><th>Конспект темы</th><th>Конспект заданий</th><th>Доска</th><th>Интерактив</th><th>ДЗ</th><th>Прогресс</th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
         <div class="empty" id="empty">По вашему запросу ничего не найдено.</div>

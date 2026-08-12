@@ -37,13 +37,16 @@
     .button.secondary { background: var(--accent-soft); color: var(--accent-dark); box-shadow: none; }
     .message { margin: 15px 0 0; padding: 11px 13px; border-radius: 12px; background: var(--danger-soft); color: var(--danger); font-size: 13px; font-weight: 650; line-height: 1.4; }
     .message:empty { display: none; }
+    .auth-loading { min-height: 100vh; display: grid; place-items: center; color: var(--muted); }
+    .loading-box { display: grid; justify-items: center; gap: 12px; font-size: 13px; font-weight: 700; }
+    .spinner { width: 28px; height: 28px; border: 3px solid #ded8e8; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
 
     .shell { width: min(1500px,100%); margin: 0 auto; padding: 40px 28px 64px; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
     .account { margin: 14px 0 0; color: var(--muted); }
     .account strong { color: var(--ink); }
     .panel { overflow: hidden; margin-top: 34px; border: 1px solid rgba(255,255,255,.9); border-radius: 28px; background: var(--paper); box-shadow: var(--shadow); backdrop-filter: blur(18px); }
-    .toolbar { display: grid; grid-template-columns: minmax(240px,1fr) 220px 220px auto; gap: 10px; padding: 16px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.58); }
+    .toolbar { display: grid; grid-template-columns: minmax(220px,1fr) 200px 220px auto auto; gap: 10px; padding: 16px; border-bottom: 1px solid var(--line); background: rgba(255,255,255,.58); }
     input.control { padding: 0 14px; }
     select.control { padding: 0 36px 0 13px; cursor: pointer; }
     .table-wrap { max-height: 68vh; overflow: auto; scrollbar-color: #c9c1d9 transparent; }
@@ -52,7 +55,9 @@
     td { padding: 14px 12px; border-bottom: 1px solid #f0edf3; vertical-align: middle; }
     tbody tr { animation: row-in .4s ease both; transition: background .2s; }
     tbody tr:hover { background: rgba(238,233,251,.32); }
-    th:first-child, td:first-child { width: 360px; padding-left: 18px; }
+    th:first-child, td:first-child { width: 52px; padding-left: 18px; }
+    th:nth-child(2), td:nth-child(2) { width: 360px; }
+    .row-number { color: #918a99; font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; }
     .rule { font-weight: 650; line-height: 1.48; }
     .status-select { min-width: 135px; height: 38px; padding: 0 30px 0 10px; border: 1px solid transparent; border-radius: 10px; outline: none; font-size: 12px; font-weight: 720; cursor: pointer; }
     .status-select.plan { color: var(--plan); border-color: #e2dfe5; background: var(--plan-soft); }
@@ -67,16 +72,34 @@
     .save-state { min-height: 18px; margin-top: 5px; color: var(--muted); font-size: 11px; font-weight: 700; text-align: right; }
     .save-state.saved { color: var(--done); }
     .save-state.error { color: var(--danger); }
+    .actions { width: 54px; text-align: center; }
+    .icon-button { width: 36px; height: 36px; display: inline-grid; place-items: center; border: 1px solid var(--line); border-radius: 11px; background: #fff; color: var(--accent-dark); font-size: 17px; cursor: pointer; transition: transform .18s, background .18s, border-color .18s; }
+    .icon-button:hover { transform: translateY(-1px); border-color: #cfc5e1; background: var(--accent-soft); }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 30; max-width: min(380px,calc(100vw - 32px)); padding: 12px 16px; border-radius: 13px; background: var(--ink); color: #fff; box-shadow: var(--shadow); font-size: 13px; font-weight: 750; animation: toast-in .25s ease both; }
+    .modal { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(40,37,52,.38); backdrop-filter: blur(5px); }
+    .modal-card { width: min(520px,100%); max-height: calc(100vh - 40px); overflow: auto; padding: 28px; border: 1px solid rgba(255,255,255,.9); border-radius: 24px; background: #fff; box-shadow: 0 28px 80px rgba(40,37,52,.22); }
+    .modal-card h2 { margin: 0; font-size: 27px; letter-spacing: -.035em; }
+    .modal-card .intro { margin-bottom: 20px; }
+    .section-picker { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 8px; }
+    .section-picker .field { min-width: 0; }
+    .small-button { height: 46px; padding: 0 13px; border: 1px solid #d9d1e7; border-radius: 13px; background: var(--accent-soft); color: var(--accent-dark); font-size: 13px; font-weight: 750; cursor: pointer; white-space: nowrap; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 24px; }
+    .modal-actions .button { min-width: 112px; }
+    .button.danger { background: linear-gradient(135deg,#b65c70,#914155); box-shadow: 0 8px 20px rgba(145,65,85,.2); }
+    .danger-text { color: var(--danger); }
     .empty { display: none; padding: 48px 24px; color: var(--muted); text-align: center; }
     .foot { padding: 13px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
     @keyframes row-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
 
-    @media (max-width: 900px) { .shell { padding: 30px 18px 40px; } .toolbar { grid-template-columns: 1fr 1fr; } .toolbar input { grid-column: 1/-1; } }
-    @media (max-width: 560px) { .auth-shell { padding: 12px; } .auth-card { padding: 25px 20px; border-radius: 21px; } .shell { padding: 24px 12px 32px; } .header { flex-direction: column; } .header .button { width: 100%; } .toolbar { grid-template-columns: 1fr; } .toolbar input { grid-column: auto; } .panel { border-radius: 20px; } }
+    @media (max-width: 1050px) { .toolbar { grid-template-columns: 1fr 1fr; } .toolbar input { grid-column: 1/-1; } }
+    @media (max-width: 900px) { .shell { padding: 30px 18px 40px; } }
+    @media (max-width: 560px) { .auth-shell { padding: 12px; } .auth-card { padding: 25px 20px; border-radius: 21px; } .shell { padding: 24px 12px 32px; } .header { flex-direction: column; } .header .button { width: 100%; } .toolbar { grid-template-columns: 1fr; } .toolbar input { grid-column: auto; } .panel { border-radius: 20px; } .section-picker { grid-template-columns: 1fr; } .modal { padding: 10px; } .modal-card { padding: 22px 18px; border-radius: 20px; } .modal-actions { flex-direction: column-reverse; } .modal-actions .button { width: 100%; } .toast { right: 16px; bottom: 16px; } }
   </style>
 </head>
 <body>
-  <div class="auth-shell" id="authCheck"><p>Проверяем авторизацию…</p></div>
+  <div class="auth-loading" id="authLoading" hidden><div class="loading-box"><span class="spinner" aria-hidden="true"></span><span>Загрузка…</span></div></div>
 
   <div class="auth-shell" id="loginView" hidden>
     <main class="auth-card">
@@ -93,22 +116,23 @@
 
   <main class="shell" id="workspace" hidden>
     <header class="header">
-      <div><h1>Мой трекер материалов</h1><p class="account">Добро пожаловать, <strong id="userLogin"></strong></p></div>
+      <h1>Мой трекер материалов</h1>
       <button class="button secondary" id="logoutButton" type="button">Выйти</button>
     </header>
     <p class="message" id="workspaceError" role="alert" aria-live="polite"></p>
     <section class="panel">
       <div class="toolbar">
-        <input class="control" id="search" type="search" placeholder="Найти тему или раздел…" autocomplete="off">
+        <input class="control" id="search" type="search" placeholder="Найти тему…" autocomplete="off">
         <select class="control" id="sectionFilter" aria-label="Фильтр по разделу"><option value="">Все разделы</option></select>
         <select class="control" id="progressFilter" aria-label="Фильтр по готовности">
-          <option value="">Любая готовность</option><option value="ready">Готово на 100%</option><option value="work">В работе</option><option value="planned">Ещё не начато</option>
+          <option value="">Все статусы</option><option value="ready">Готово на 100%</option><option value="work">В работе</option><option value="planned">Ещё не начато</option>
         </select>
         <button class="button" id="refresh" type="button">Обновить</button>
+        <button class="button" id="addTopicButton" type="button">+ Добавить тему</button>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Правило</th><th>Класс</th><th>Конспект правила</th><th>Конспект заданий</th><th>Доска</th><th>Интерактив</th><th>ДЗ</th><th>Прогресс</th></tr></thead>
+          <thead><tr><th>№</th><th>Тема</th><th>Класс</th><th>Конспект темы</th><th>Конспект заданий</th><th>Доска</th><th>Интерактив</th><th>ДЗ</th><th>Прогресс</th><th class="actions">Действия</th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
         <div class="empty" id="empty">По вашему запросу ничего не найдено.</div>
@@ -116,6 +140,33 @@
       <footer class="foot"><span id="count">Загрузка данных…</span></footer>
     </section>
   </main>
+
+  <div class="modal" id="topicModal" role="dialog" aria-modal="true" aria-labelledby="topicModalTitle" hidden>
+    <form class="modal-card" id="topicForm">
+      <h2 id="topicModalTitle">Добавить тему</h2>
+      <p class="intro" id="topicModalIntro">Заполните основные сведения о новой теме.</p>
+      <div class="section-picker">
+        <label class="field"><span>Раздел</span><select class="control" id="topicSection" required></select></label>
+        <button class="small-button" id="newSectionButton" type="button">+ Новый раздел</button>
+      </div>
+      <label class="field" id="newSectionField" hidden><span>Название нового раздела</span><input id="newSectionName" type="text" maxlength="100"></label>
+      <label class="field"><span>Тема</span><input id="topicRule" type="text" maxlength="300" required></label>
+      <label class="field"><span>Класс</span><input id="topicGrade" type="number" min="1" max="11" step="1" required></label>
+      <p class="message" id="topicError" role="alert" aria-live="polite"></p>
+      <div class="modal-actions"><button class="button secondary" id="cancelTopicButton" type="button">Отмена</button><button class="button" id="saveTopicButton" type="submit">Добавить</button></div>
+    </form>
+  </div>
+
+  <div class="modal" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle" hidden>
+    <div class="modal-card">
+      <h2 id="deleteModalTitle">Удалить тему?</h2>
+      <p class="intro danger-text" id="deleteQuestion"></p>
+      <p class="message" id="deleteError" role="alert" aria-live="polite"></p>
+      <div class="modal-actions"><button class="button secondary" id="cancelDeleteButton" type="button">Отмена</button><button class="button danger" id="confirmDeleteButton" type="button">Удалить</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <script type="module" src="./tracker.js"></script>
 </body>
 </html>

@@ -38,6 +38,9 @@
     .button.secondary { background: var(--accent-soft); color: var(--accent-dark); box-shadow: none; }
     .message { margin: 15px 0 0; padding: 11px 13px; border-radius: 12px; background: var(--danger-soft); color: var(--danger); font-size: 13px; font-weight: 650; line-height: 1.4; }
     .message:empty { display: none; }
+    .save-progress { display:flex; align-items:center; gap:9px; min-height:22px; margin:14px 0 0; color:#67588e; font-size:13px; font-weight:700; }
+    .save-progress:empty { display:none; }
+    .save-progress.is-saving::before { content:""; width:15px; height:15px; flex:0 0 auto; border:2px solid rgba(101,67,169,.22); border-top-color:#7658b2; border-radius:50%; animation:spin .75s linear infinite; }
     .auth-loading { min-height: 100vh; display: grid; place-items: center; color: var(--muted); }
     .loading-box { display: grid; justify-items: center; gap: 12px; font-size: 13px; font-weight: 700; }
     .spinner { width: 28px; height: 28px; border: 3px solid #ded8e8; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
@@ -115,21 +118,37 @@
     .icon-button:hover { transform: translateY(-1px); border-color: #cfc5e1; background: var(--accent-soft); }
     .icon-button svg { width:19px; height:19px; display:block; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
     .pencil-icon { display: inline-block; transform: scaleX(-1) rotate(-12deg); }
-    body.focus-mode::before { content: ""; position: fixed; inset: 0; z-index: -1; background: rgba(39,34,56,.12); pointer-events: none; transition: opacity .5s; }
-    .focus-particles { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-    .focus-particles i { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: rgba(167,231,207,.32); filter: blur(1px); animation: drift 12s ease-in-out infinite alternate; }
+    body.focus-mode { overflow:hidden; }
+    body.focus-mode::before { content: ""; position: fixed; inset: 0; z-index: 10; background:radial-gradient(ellipse 75% 46% at 56% 18%,rgba(26,211,184,.3),transparent 58%),radial-gradient(ellipse 62% 52% at 78% 42%,rgba(132,69,222,.34),transparent 66%),radial-gradient(ellipse 58% 42% at 14% 68%,rgba(46,132,220,.28),transparent 64%),linear-gradient(155deg,#061226 0%,#0a2143 45%,#10173b 72%,#07152c 100%); pointer-events:none; }
+    body.focus-mode::after { content:"";position:fixed;inset:-30% -20% 40%;z-index:11;pointer-events:none;background:linear-gradient(108deg,transparent 8%,rgba(103,82,227,.38) 28%,rgba(35,214,185,.3) 51%,rgba(67,129,226,.25) 70%,rgba(175,76,222,.36) 88%,transparent 98%);filter:blur(38px);border-radius:48%;animation:focus-aurora 30s ease-in-out infinite alternate; }
+    .focus-particles { position: fixed; inset: 0; z-index: 12; overflow: hidden; pointer-events: none; }
+    .focus-particles i { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: rgba(167,231,207,.36); box-shadow:0 0 18px rgba(114,226,206,.45); filter: blur(.5px); animation: drift 18s ease-in-out infinite alternate; }
     .focus-particles i:nth-child(1) { left: 8%; top: 24%; } .focus-particles i:nth-child(2) { left: 72%; top: 15%; animation-delay: -4s; } .focus-particles i:nth-child(3) { left: 88%; top: 68%; animation-delay: -8s; } .focus-particles i:nth-child(4) { left: 24%; top: 80%; animation-delay: -2s; }
-    body.focus-mode tbody tr:not(.focus-active) { opacity: .45; filter: saturate(.65); }
-    body.focus-mode tbody tr.focus-active { position: relative; z-index: 2; transform: scale(1.008); background: rgba(255,255,255,.98); box-shadow: 0 0 0 2px rgba(134,111,193,.24),0 0 30px rgba(120,105,190,.2),0 0 42px rgba(105,205,168,.16); animation: focus-glow 3.4s ease-in-out infinite; }
-    .focus-panel { position: relative; z-index: 3; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; margin-top: 26px; padding: 18px 20px; border: 1px solid rgba(170,151,219,.45); border-radius: 20px; background: linear-gradient(120deg,rgba(245,240,255,.96),rgba(231,249,241,.94)); box-shadow: 0 15px 42px rgba(79,62,117,.12); }
-    .focus-copy small { display: block; color: var(--accent); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-    .focus-copy strong { display: block; margin-top: 4px; font-size: 18px; }
-    .focus-copy span { color: var(--muted); font-size: 13px; }
-    .focus-clock { display: flex; align-items: center; gap: 9px; font-size: 25px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .03em; }
+    .focus-panel { position:fixed; inset:0; z-index:13; display:grid; grid-template-rows:auto 1fr auto; width:100%; min-height:100dvh; margin:0; padding:clamp(22px,4vh,44px) clamp(18px,5vw,70px) clamp(20px,3vh,34px); color:#f3f5ff; overflow:auto; }
+    .focus-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; width:min(1040px,100%); margin:0 auto; }
+    .focus-kicker { margin:0 0 16px; color:#cbb7ff; font-size:15px; font-weight:800; letter-spacing:.04em; }
+    .focus-copy small { display:block; color:#8da6c8; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    .focus-copy strong { display:block; margin-top:6px; color:#fff; font-size:clamp(24px,3vw,38px); line-height:1.12; }
+    .focus-copy span { display:inline-block; margin-top:10px; padding:7px 12px; border:1px solid rgba(119,218,207,.34); border-radius:10px; background:rgba(15,42,78,.55); color:#d7e8fb; font-size:14px; }
+    .focus-main { display:grid; place-items:center; align-content:center; gap:16px; min-height:330px; }
+    .focus-clock { display:flex; align-items:center; gap:14px; color:#fff; font-size:clamp(56px,9vw,112px); font-weight:500; font-variant-numeric:tabular-nums; letter-spacing:.025em; line-height:1; text-shadow:0 0 36px rgba(111,205,220,.23); }
     .live-dot { width: 10px; height: 10px; border-radius: 50%; background: #54aa83; box-shadow: 0 0 0 6px rgba(84,170,131,.12); animation: live-pulse 1.8s ease-in-out infinite; }
-    .focus-actions { display: flex; gap: 8px; }
-    .crystal-scene { position: relative; width: 72px; height: 64px; display: grid; place-items: end center; transition: opacity .35s ease; }
-    .crystal-image { width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(112,203,176,.5));animation:crystal-pulse 2.8s ease-in-out infinite; }
+    .focus-actions { display:grid; grid-template-columns:1fr 1fr; gap:12px; width:min(470px,100%); }
+    .focus-actions .button { height:52px; font-size:15px; }
+    .focus-actions #finishFocusButton { background:linear-gradient(110deg,#42d6c1,#8e69ee 65%,#bc68df);box-shadow:0 12px 32px rgba(100,88,220,.32),0 0 22px rgba(64,213,191,.15); }
+    .focus-actions #cancelFocusButton { border:1px solid rgba(176,161,230,.42);background:rgba(31,41,83,.62);color:#e7e4fa; }
+    .crystal-scene { position:relative; width:min(280px,58vw); height:min(245px,29vh); display:grid; place-items:end center; transition:opacity .35s ease,transform .35s ease; }
+    .crystal-image { width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 18px rgba(112,203,176,.55)) drop-shadow(0 0 35px rgba(132,91,218,.3));animation:crystal-pulse 3.6s ease-in-out infinite;transition:opacity .35s ease,transform .35s ease; }
+    .crystal-image.changing { opacity:0; transform:scale(.94); }
+    .focus-stages { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; width:min(680px,100%); margin:0 auto; }
+    .focus-stage { position:relative; padding-top:20px; color:#8299b8; font-size:12px; font-weight:800; text-align:center; }
+    .focus-stage::before { content:"";position:absolute;top:6px;left:50%;width:10px;height:10px;border:1px solid rgba(143,176,217,.55);border-radius:50%;background:#10294d;transform:translateX(-50%);z-index:1;transition:.35s ease; }
+    .focus-stage::after { content:"";position:absolute;top:10px;right:50%;width:100%;height:2px;background:rgba(121,151,194,.23); }
+    .focus-stage:first-child::after { display:none; }
+    .focus-stage.active { color:#d8c7ff; }
+    .focus-stage.active::before { border-color:#5ddbc5;background:#55d6bd;box-shadow:0 0 14px rgba(85,214,189,.72); }
+    .focus-stage.active::after { background:linear-gradient(90deg,#8874e7,#55d6bd); }
+    .focus-footer { display:grid; gap:16px; width:min(1040px,100%); margin:0 auto; }
     .crystal { --scale: .62; position: relative; width: 27px; height: 43px; transform: scale(var(--scale)); transform-origin: bottom; clip-path: polygon(50% 0,88% 25%,100% 72%,50% 100%,0 72%,12% 25%); background: linear-gradient(135deg,#ab93e8 0 34%,#70cbb0 35% 66%,#6652a5 67%); filter: drop-shadow(0 0 8px rgba(119,95,185,.42)); transition: transform .8s,filter .8s; animation: crystal-pulse 2.8s ease-in-out infinite; }
     .crystal::after { content: ""; position: absolute; inset: 17% 27% 20% 48%; background: rgba(255,255,255,.35); clip-path: polygon(0 0,100% 23%,58% 100%); opacity: 0; transition: opacity .6s; }
     .crystal-scene.stage-2 .crystal { --scale: .78; } .crystal-scene.stage-3 .crystal { --scale: .9; filter: drop-shadow(0 0 13px rgba(119,95,185,.58)); } .crystal-scene.stage-3 .crystal::after { opacity: 1; }
@@ -161,6 +180,12 @@
     .modal-card select.control option { color:#282534; background:#fff; }
     .modal-card .control:focus,.modal-card .field input:focus { border-color:#7658b2; background-color:#fff; box-shadow:0 0 0 4px rgba(118,88,178,.14); }
     .modal-card .danger-text { color:#8f3248; }
+    #focusCancelModal { background:rgba(4,9,28,.7); backdrop-filter:blur(14px); }
+    #focusCancelModal .modal-card { color:#eef4ff; background:linear-gradient(145deg,rgba(18,35,70,.96),rgba(30,22,65,.94)); border-color:rgba(139,202,238,.3); box-shadow:0 28px 80px rgba(0,0,20,.56),inset 0 1px 0 rgba(255,255,255,.08); }
+    #focusCancelModal .modal-card h2 { color:#f5f7ff; }
+    #focusCancelModal .modal-card .intro { color:#b8c7df; }
+    #focusCancelModal .button.secondary { color:#e9f2ff; background:rgba(117,146,191,.14); border-color:rgba(160,199,232,.3); }
+    #focusCancelModal .button.secondary:hover { background:rgba(117,146,191,.24); }
     .section-picker { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 8px; }
     .section-picker .field { min-width: 0; }
     .small-button { height: 46px; padding: 0 13px; border: 1px solid #d9d1e7; border-radius: 13px; background: var(--accent-soft); color: var(--accent-dark); font-size: 13px; font-weight: 750; cursor: pointer; white-space: nowrap; }
@@ -183,6 +208,7 @@
     @keyframes focus-glow { 50% { box-shadow: 0 0 0 2px rgba(134,111,193,.34),0 0 38px rgba(120,105,190,.26),0 0 50px rgba(105,205,168,.2); } }
     @keyframes crystal-flash { 45% { filter: brightness(1.8); transform: scale(1.12); } }
     @keyframes scatter { to { transform: translate(var(--scatter-x,35px),var(--scatter-y,-45px)) scale(.2); opacity: 0; } }
+    @keyframes focus-aurora { from{transform:translate3d(-3%,0,0) rotate(-4deg) scale(1)}to{transform:translate3d(4%,3%,0) rotate(1deg) scale(1.07)} }
     @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; } }
 
     /* Главный экран: мягкое северное сияние */
@@ -255,7 +281,7 @@
 
     @media (max-width: 1050px) { .toolbar { grid-template-columns: 1fr 1fr; } .toolbar input { grid-column: 1/-1; } body.workspace-open:not(.focus-mode) #workspace .dashboard{grid-template-columns:1fr 1fr} body.workspace-open:not(.focus-mode) #workspace .toolbar{grid-template-columns:1fr 1fr} body.workspace-open:not(.focus-mode) #workspace .toolbar input{grid-column:1/-1} }
     @media (max-width: 900px) { .shell { padding: 30px 18px 40px; } .dashboard{grid-template-columns:1fr;} }
-    @media (max-width: 700px) { .focus-panel { grid-template-columns: auto 1fr; } .focus-actions { grid-column: 1/-1; } }
+    @media (max-width:700px) { .focus-panel{padding:20px 16px}.focus-heading{display:block}.focus-kicker{margin-bottom:12px}.focus-main{min-height:360px}.focus-clock{font-size:clamp(48px,16vw,74px)}.crystal-scene{height:190px}.focus-stages{gap:4px}.focus-actions{grid-template-columns:1fr}.focus-actions .button{width:100%} }
     @media (max-width: 700px) { body.workspace-open:not(.focus-mode) #workspace{width:calc(100% - 16px);margin:8px auto 20px;padding:18px 12px 22px;border-radius:18px} body.workspace-open:not(.focus-mode) #workspace .dashboard{grid-template-columns:1fr} }
     @media (max-width: 560px) { .auth-shell { padding: 12px; } .auth-card { padding: 25px 20px; border-radius: 21px; } .shell { padding: 24px 12px 32px; } .header { flex-direction: column; } .header-actions{width:100%;flex-wrap:wrap}.profile-chip{flex:1}.header .button { flex:1; } .toolbar { grid-template-columns: 1fr; } .toolbar input { grid-column: auto; } .panel { border-radius: 20px; } .section-picker { grid-template-columns: 1fr; } .modal { padding: 10px; } .modal-card { padding: 22px 18px; border-radius: 20px; } #profileModal .modal-card{max-height:calc(100dvh - 20px)} .modal-actions { flex-direction: column-reverse; } .modal-actions .button { width: 100%; } .toast { right: 16px; bottom: 16px; } .focus-panel { grid-template-columns: 1fr; text-align: center; } .crystal-scene { margin: auto; } .focus-clock,.focus-actions { justify-content: center; } .efficiency{grid-template-columns:74px 1fr}.eff-ring{width:72px;height:72px}.profile-grid{grid-template-columns:1fr;} body.workspace-open:not(.focus-mode) #workspace .header{align-items:stretch} body.workspace-open:not(.focus-mode) #workspace .header-actions{display:grid;grid-template-columns:1fr auto} body.workspace-open:not(.focus-mode) #workspace .toolbar{grid-template-columns:1fr} body.workspace-open:not(.focus-mode) #workspace .toolbar input{grid-column:auto} body.workspace-open:not(.focus-mode) #workspace .dash-card{min-height:auto} }
   </style>
@@ -286,10 +312,10 @@
       <div class="dash-card efficiency"><div class="eff-ring" id="efficiencyRing"><strong id="efficiencyValue">0%</strong></div><div><h2>Эффективность за день</h2><p class="intro" id="efficiencyNote">Любое спокойное продвижение считается.</p></div></div>
       <div class="dash-card"><h2>Сегодняшние задачи</h2><div class="task-list" id="dailyTasks"><p class="intro">Добавьте материал из действий темы.</p></div></div>
     </section>
-    <section class="focus-panel" id="focusPanel" hidden>
-      <div class="crystal-scene stage-1" id="crystalScene"><img class="crystal-image" id="crystalImage" src="./assets/focus-crystals/crystal-05-min.png" alt="Растущий кристалл фокуса"><span class="crystal" hidden></span><span class="crystal-baby" hidden></span></div>
-      <div class="focus-copy"><small>Сейчас работаю</small><strong id="focusTopic"></strong><span id="focusMaterial"></span></div>
-      <div><div class="focus-clock"><span class="live-dot" aria-hidden="true"></span><time id="focusTimer">00:00:00</time></div><div class="focus-actions"><button class="button" id="finishFocusButton" type="button">Завершить</button><button class="button secondary" id="cancelFocusButton" type="button">Отменить</button></div></div>
+    <section class="focus-panel" id="focusPanel" aria-label="Активная фокус-сессия" hidden>
+      <header class="focus-heading"><div><p class="focus-kicker">✦ Фокус-режим</p><div class="focus-copy"><small>Активная тема</small><strong id="focusTopic"></strong><span id="focusMaterial"></span></div></div></header>
+      <div class="focus-main"><div class="focus-clock"><span class="live-dot" aria-hidden="true"></span><time id="focusTimer">00:00:00</time></div><div class="crystal-scene stage-1" id="crystalScene"><img class="crystal-image" id="crystalImage" src="./assets/focus-crystals/crystal-05-min.png" alt="Растущий кристалл фокуса"><span class="crystal" hidden></span><span class="crystal-baby" hidden></span></div><div class="focus-actions"><button class="button" id="finishFocusButton" type="button">Завершить</button><button class="button secondary" id="cancelFocusButton" type="button">Отменить</button></div></div>
+      <footer class="focus-footer"><div class="focus-stages" id="focusStages" aria-label="Этапы роста кристалла"><span class="focus-stage" data-minutes="5">5 минут</span><span class="focus-stage" data-minutes="10">10 минут</span><span class="focus-stage" data-minutes="20">20 минут</span><span class="focus-stage" data-minutes="30">30 минут</span></div></footer>
     </section>
     <section class="panel">
       <div class="toolbar">
@@ -341,8 +367,9 @@
   </div>
 
   <div class="modal" id="focusFinishModal" role="dialog" aria-modal="true" aria-labelledby="focusFinishTitle" hidden>
-    <form class="modal-card" id="focusFinishForm"><h2 id="focusFinishTitle">Завершить сессию</h2><p class="finish-duration" id="focusDuration"></p><label class="field"><span>Результат работы</span><select class="control" id="focusResult"><option value="keep">Оставить текущий статус</option><option value="В работе">Поставить «В работе»</option><option value="Готово">Поставить «Готово»</option></select></label><p class="message" id="focusFinishError" role="alert" aria-live="polite"></p><div class="modal-actions"><button class="button secondary" id="continueFocusButton" type="button">Продолжить работу</button><button class="button" id="saveFocusButton" type="submit">Сохранить результат</button></div></form>
+    <form class="modal-card" id="focusFinishForm"><h2 id="focusFinishTitle">Завершить сессию</h2><p class="finish-duration" id="focusDuration"></p><label class="field"><span>Результат работы</span><select class="control" id="focusResult"><option value="keep">Оставить текущий статус</option><option value="В работе">Поставить «В работе»</option><option value="Готово">Поставить «Готово»</option></select></label><p class="save-progress" id="focusSaveStatus" role="status" aria-live="polite"></p><p class="message" id="focusFinishError" role="alert" aria-live="assertive"></p><div class="modal-actions"><button class="button secondary" id="continueFocusButton" type="button">Продолжить работу</button><button class="button" id="saveFocusButton" type="submit">Сохранить результат</button></div></form>
   </div>
+  <div class="modal" id="focusCancelModal" role="dialog" aria-modal="true" aria-labelledby="focusCancelTitle" hidden><div class="modal-card"><h2 id="focusCancelTitle">Отменить фокус-сессию?</h2><p class="intro">Время и результат этой сессии не сохранятся.</p><div class="modal-actions"><button class="button secondary" id="continueAfterCancelButton" type="button">Продолжить работу</button><button class="button danger" id="confirmCancelFocusButton" type="button">Отменить сессию</button></div></div></div>
 
   <div class="focus-particles" id="focusParticles" hidden><i></i><i></i><i></i><i></i></div>
   <div class="modal" id="todayModal" role="dialog" aria-modal="true" aria-labelledby="todayTitle" hidden><div class="modal-card"><h2 id="todayTitle">Добавить на сегодня</h2><p class="intro" id="todayTopic"></p><div class="focus-materials" id="todayMaterials"></div><div class="modal-actions"><button class="button secondary" id="cancelTodayButton" type="button">Отмена</button></div></div></div>

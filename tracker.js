@@ -18,7 +18,7 @@ const stageFields = ["ruleNotes", "exerciseNotes", "board", "interactive", "home
 const stageLabels = { ruleNotes: "Конспект темы", exerciseNotes: "Конспект заданий", board: "Доска", interactive: "Интерактив", homework: "ДЗ" };
 const eventTypeLabels = { material_ready:"Материал готов", "material ready":"Материал готов", quick_progress:"Быстрый результат", "quick progress":"Быстрый результат", focus_time:"Фокус-сессия завершена", focus_session:"Фокус-сессия завершена", "focus session":"Фокус-сессия завершена", task_completed:"Задача выполнена", "task completed":"Задача выполнена", topic_ready:"Тема полностью готова", topic_completed:"Тема полностью готова", "topic completed":"Тема полностью готова" };
 const scores = { "План": 0, "В работе": 50, "Готово": 100 };
-const elementIds = ["authLoading","loginView","workspace","loginForm","email","password","loginButton","loginError","logoutButton","workspaceError","search","sectionFilter","progressFilter","addTopicButton","rows","empty","count","topicModal","topicForm","topicModalTitle","topicModalIntro","topicSection","newSectionButton","newSectionField","newSectionName","topicRule","topicGrade","topicError","cancelTopicButton","saveTopicButton","deleteModal","deleteQuestion","deleteError","cancelDeleteButton","confirmDeleteButton","toast","focusPanel","focusTopic","focusMaterial","focusTimer","crystalScene","finishFocusButton","cancelFocusButton","focusStartModal","focusStartTopic","focusMaterials","cancelFocusStartButton","focusFinishModal","focusFinishForm","focusDuration","focusResult","focusFinishError","continueFocusButton","saveFocusButton","focusParticles","profileButton","profileInitial","profileAvatar","profileLargeInitial","profileLargeAvatar","profileName","coinBalance","headerCoinBalance","profileCoinBalance","efficiencyRing","efficiencyValue","efficiencyNote","dailyTasks","todayModal","todayTopic","todayMaterials","cancelTodayButton","profileModal","profileSubtitle","profileCoins","profileMinutes","profileSessions","historyList","closeProfileButton"];
+const elementIds = ["authLoading","loginView","workspace","loginForm","email","password","loginButton","loginError","logoutButton","workspaceError","search","sectionFilter","progressFilter","addTopicButton","rows","empty","count","topicModal","topicForm","topicModalTitle","topicModalIntro","topicSection","newSectionButton","newSectionField","newSectionName","topicRule","topicGrade","topicError","cancelTopicButton","saveTopicButton","deleteModal","deleteQuestion","deleteError","cancelDeleteButton","confirmDeleteButton","toast","focusPanel","focusTopic","focusMaterial","focusTimer","crystalScene","focusStages","finishFocusButton","cancelFocusButton","focusStartModal","focusStartTopic","focusMaterials","cancelFocusStartButton","focusFinishModal","focusFinishForm","focusDuration","focusResult","focusFinishError","focusSaveStatus","continueFocusButton","saveFocusButton","focusCancelModal","continueAfterCancelButton","confirmCancelFocusButton","focusParticles","profileButton","profileInitial","profileAvatar","profileLargeInitial","profileLargeAvatar","profileName","coinBalance","headerCoinBalance","profileCoinBalance","efficiencyRing","efficiencyValue","efficiencyNote","dailyTasks","todayModal","todayTopic","todayMaterials","cancelTodayButton","profileModal","profileSubtitle","profileCoins","profileMinutes","profileSessions","historyList","closeProfileButton"];
 elementIds.push("crystalImage");
 const els = Object.fromEntries(elementIds.map(id => [id, document.getElementById(id)]));
 let materials = [];
@@ -33,6 +33,7 @@ const focusStorageKey = "materialsTrackerFocusSession";
 let activeFocus = null;
 let pendingFocusItem = null;
 let focusTimerId = null;
+let currentCrystalAsset = "05";
 let profile = { displayName:"",coins:0,totalFocusMinutes:0,focusSessionsCount:0,completedTasksCount:0 };
 let dailyTasks = [];
 let rewardHistory = [];
@@ -384,7 +385,9 @@ function updateFocusDisplay() {
   const elapsed = Date.now() - activeFocus.startedAt;
   els.focusTimer.textContent = formatDuration(elapsed);
   els.crystalScene.className = `crystal-scene stage-${crystalStage(elapsed)}`;
-  const minutes=elapsed/60000; const asset=minutes>=30?"30":minutes>=20?"20":minutes>=10?"10":"05"; els.crystalImage.src=`./assets/focus-crystals/crystal-${asset}-min.png`;
+  const minutes=elapsed/60000; const asset=minutes>=30?"30":minutes>=20?"20":minutes>=10?"10":"05";
+  [...els.focusStages.children].forEach(stage=>stage.classList.toggle("active",minutes>=Number(stage.dataset.minutes)));
+  if(asset!==currentCrystalAsset){ currentCrystalAsset=asset; els.crystalImage.classList.add("changing"); const nextImage=new Image(); nextImage.onload=()=>{ els.crystalImage.src=nextImage.src; window.requestAnimationFrame(()=>els.crystalImage.classList.remove("changing")); }; nextImage.onerror=()=>els.crystalImage.classList.remove("changing"); nextImage.src=`./assets/focus-crystals/crystal-${asset}-min.png`; }
 }
 
 function startFocusClock() {
@@ -399,6 +402,7 @@ function applyFocusMode() {
   els.focusPanel.hidden = !enabled;
   els.focusParticles.hidden = !enabled;
   if (enabled) {
+    const elapsed=Date.now()-activeFocus.startedAt; currentCrystalAsset=elapsed>=1800000?"30":elapsed>=1200000?"20":elapsed>=600000?"10":"05"; els.crystalImage.src=`./assets/focus-crystals/crystal-${currentCrystalAsset}-min.png`;
     els.focusTopic.textContent = activeFocus.topicName;
     els.focusMaterial.textContent = activeFocus.materialName;
     startFocusClock();
@@ -450,8 +454,11 @@ function beginFocus(field) {
   applyFocusMode();
 }
 
+function openCancelFocus() { if(!activeFocus)return; els.focusCancelModal.hidden=false; els.continueAfterCancelButton.focus(); }
+function closeCancelFocus() { els.focusCancelModal.hidden=true; els.cancelFocusButton.focus(); }
 function cancelFocus() {
-  if (!activeFocus || !window.confirm("Отменить текущую фокус-сессию? Статус материала не изменится.")) return;
+  if (!activeFocus) return;
+  els.focusCancelModal.hidden=true;
   window.clearInterval(focusTimerId);
   focusTimerId = null;
   els.crystalScene.style.opacity = "0";
@@ -470,6 +477,8 @@ function openFocusFinish() {
   els.focusDuration.textContent = `Продолжительность работы: ${formatDuration(Date.now() - activeFocus.startedAt)}`;
   els.focusResult.value = "keep";
   els.focusFinishError.textContent = "";
+  els.focusSaveStatus.textContent = "";
+  els.focusSaveStatus.classList.remove("is-saving");
   els.focusFinishModal.hidden = false;
 }
 
@@ -484,6 +493,9 @@ async function saveFocusResult(event) {
   const result = els.focusResult.value;
   const item = materials.find(value => value.documentId === activeFocus.documentId);
   els.focusFinishError.textContent = "";
+  const showSaveStage = message => { els.focusSaveStatus.textContent = message; els.focusSaveStatus.classList.add("is-saving"); };
+  showSaveStage("Сохраняем результат работы…");
+  const slowSaveNotice = window.setTimeout(() => showSaveStage("Сохранение занимает больше обычного. Не закрывайте страницу…"),8000);
   els.saveFocusButton.disabled = true;
   els.continueFocusButton.disabled = true;
   els.saveFocusButton.textContent = "Сохраняю…";
@@ -494,15 +506,28 @@ async function saveFocusResult(event) {
       await updateDoc(doc(db,"materials",activeFocus.documentId),{ [activeFocus.materialField]:result });
       item[activeFocus.materialField] = result;
     }
-    if (result === "Готово") await completeDailyTasks(activeFocus.documentId,activeFocus.materialField);
+    if (result === "Готово") { showSaveStage("Отмечаем задачу на сегодня…"); await completeDailyTasks(activeFocus.documentId,activeFocus.materialField); }
+    showSaveStage("Записываем фокус-сессию…");
     const sessionId=activeFocus.sessionId||safeKey(`${activeFocus.startedAt}_${activeFocus.documentId}_${activeFocus.materialField}`); activeFocus.sessionId=sessionId; localStorage.setItem(focusStorageKey,JSON.stringify(activeFocus));
     const sessionRef=doc(db,"userProfiles",currentUser.uid,"focusSessions",sessionId); const after=result==="keep"?previous:result; const timeCoins=Math.min(6,Math.floor(durationSeconds/600)); const quickCoins=durationSeconds<600&&scores[after]>scores[previous]?3:0;
     const sessionExists=(await getDoc(sessionRef)).exists();
     await setDoc(sessionRef,{materialDocumentId:activeFocus.documentId,topicTitle:activeFocus.topicName,materialField:activeFocus.materialField,materialLabel:activeFocus.materialName,startedAt:new Date(activeFocus.startedAt),endedAt:serverTimestamp(),durationSeconds,statusBefore:previous,statusAfter:after,coinsAwarded:timeCoins+quickCoins,completed:true});
-    if (!sessionExists) { await setDoc(doc(db,"userProfiles",currentUser.uid),{totalFocusMinutes:increment(Math.floor(durationSeconds/60)),focusSessionsCount:increment(1),updatedAt:serverTimestamp()},{merge:true}); profile.totalFocusMinutes=(profile.totalFocusMinutes||0)+Math.floor(durationSeconds/60); profile.focusSessionsCount=(profile.focusSessionsCount||0)+1; }
-    await awardCoins(`focus-time:${sessionRef.id}`,"focus_time",timeCoins,{materialDocumentId:activeFocus.documentId,materialField:activeFocus.materialField,taskId:null,sessionId:sessionRef.id});
-    if (quickCoins) await awardCoins(`quick:${activeFocus.documentId}:${activeFocus.materialField}`,"quick_progress",quickCoins,{materialDocumentId:activeFocus.documentId,materialField:activeFocus.materialField,taskId:null,sessionId:sessionRef.id});
-    await setDoc(doc(db,"userProfiles",currentUser.uid,"dailyStats",localDate()),{focusPoints:increment(Math.min(24,Math.floor(durationSeconds/600)*4))},{merge:true}); updateProfileUI();
+    showSaveStage("Обновляем статистику и награды…");
+    const supplementaryWrites=[];
+    if (!sessionExists) supplementaryWrites.push(
+      setDoc(doc(db,"userProfiles",currentUser.uid),{totalFocusMinutes:increment(Math.floor(durationSeconds/60)),focusSessionsCount:increment(1),updatedAt:serverTimestamp()},{merge:true})
+        .then(()=>{ profile.totalFocusMinutes=(profile.totalFocusMinutes||0)+Math.floor(durationSeconds/60); profile.focusSessionsCount=(profile.focusSessionsCount||0)+1; })
+    );
+    supplementaryWrites.push(awardCoins(`focus-time:${sessionRef.id}`,"focus_time",timeCoins,{materialDocumentId:activeFocus.documentId,materialField:activeFocus.materialField,taskId:null,sessionId:sessionRef.id}));
+    if (quickCoins) supplementaryWrites.push(awardCoins(`quick:${activeFocus.documentId}:${activeFocus.materialField}`,"quick_progress",quickCoins,{materialDocumentId:activeFocus.documentId,materialField:activeFocus.materialField,taskId:null,sessionId:sessionRef.id}));
+    supplementaryWrites.push(setDoc(doc(db,"userProfiles",currentUser.uid,"dailyStats",localDate()),{focusPoints:increment(Math.min(24,Math.floor(durationSeconds/600)*4))},{merge:true}));
+    const supplementaryResults=await Promise.allSettled(supplementaryWrites);
+    const supplementaryFailed=supplementaryResults.some(result=>result.status==="rejected");
+    if(supplementaryFailed) console.warn("Фокус-сессия сохранена, но часть статистики не обновилась:",supplementaryResults.filter(result=>result.status==="rejected").map(result=>result.reason));
+    updateProfileUI();
+    const completionMessage=supplementaryFailed ? "Сессия сохранена. Дополнительную статистику обновить не удалось." : "Готово — сессия сохранена";
+    els.focusSaveStatus.textContent = completionMessage;
+    els.focusSaveStatus.classList.remove("is-saving");
     localStorage.removeItem(focusStorageKey);
     els.crystalScene.classList.add("celebrate");
     document.body.classList.add("focus-celebrate");
@@ -514,12 +539,15 @@ async function saveFocusResult(event) {
       els.crystalScene.classList.remove("celebrate");
       document.body.classList.remove("focus-celebrate");
       applyFocusMode();
-      showToast("Сессия завершена");
+      showToast(completionMessage);
     },650);
   } catch (error) {
     console.error("Не удалось завершить фокус-сессию:",error);
     els.focusFinishError.textContent = "Не удалось сохранить результат. Сессия остаётся активной — проверьте подключение и попробуйте ещё раз.";
+    els.focusSaveStatus.textContent = "";
+    els.focusSaveStatus.classList.remove("is-saving");
   } finally {
+    window.clearTimeout(slowSaveNotice);
     els.saveFocusButton.disabled = false;
     els.continueFocusButton.disabled = false;
     els.saveFocusButton.textContent = "Сохранить результат";
@@ -563,7 +591,7 @@ onAuthStateChanged(auth,user => {
   els.workspace.hidden = !user;
   els.loginError.textContent = "";
   if (user) loadWorkspaceData();
-  else { loadSequence++; materials = []; sections = []; els.rows.innerHTML = ""; els.topicModal.hidden = true; els.deleteModal.hidden = true; els.focusStartModal.hidden = true; els.focusFinishModal.hidden = true; els.profileModal.hidden = true; document.body.classList.remove("focus-mode","profile-open"); els.focusPanel.hidden = true; els.focusParticles.hidden = true; window.clearInterval(focusTimerId); }
+  else { loadSequence++; materials = []; sections = []; els.rows.innerHTML = ""; els.topicModal.hidden = true; els.deleteModal.hidden = true; els.focusStartModal.hidden = true; els.focusFinishModal.hidden = true; els.focusCancelModal.hidden = true; els.profileModal.hidden = true; document.body.classList.remove("focus-mode","profile-open"); els.focusPanel.hidden = true; els.focusParticles.hidden = true; window.clearInterval(focusTimerId); }
 });
 
 els.loginForm.addEventListener("submit",async event => { event.preventDefault(); els.loginError.textContent = ""; els.loginButton.disabled = true; els.loginButton.textContent = "Вхожу…"; try { await signInWithEmailAndPassword(auth,els.email.value.trim(),els.password.value); els.loginForm.reset(); } catch (error) { els.loginError.textContent = loginErrorMessage(error); } finally { els.loginButton.disabled = false; els.loginButton.textContent = "Войти"; } });
@@ -583,7 +611,9 @@ els.closeProfileButton.addEventListener("click",closeProfile);
 els.dailyTasks.addEventListener("click",async event=>{ const card=event.target.closest(".daily-task"); const task=card&&dailyTasks.find(value=>value.id===card.dataset.id); if(!task)return; if(event.target.closest(".task-check")){ const next=!task.completed; const button=event.target.closest(".task-check"); button.disabled=true; try{ await updateDoc(doc(db,"userProfiles",currentUser.uid,"dailyTasks",task.id),{completed:next,completedAt:next?serverTimestamp():null}); task.completed=next; task.completedAt=next?new Date():null; renderDailyTasks(); renderEfficiency(); showToast(next?"Задача выполнена":"Задача возвращена в работу"); }catch(error){ console.error("Не удалось изменить задачу:",error); showToast("Не удалось изменить задачу. Попробуйте ещё раз."); button.disabled=false; } return; } if(event.target.closest(".task-remove")){ await deleteDoc(doc(db,"userProfiles",currentUser.uid,"dailyTasks",task.id)); dailyTasks=dailyTasks.filter(value=>value.id!==task.id); renderDailyTasks(); renderEfficiency(); showToast("Убрано из плана на сегодня"); } if(event.target.closest(".task-focus")){ const item=materials.find(value=>value.documentId===task.materialDocumentId); if(item){ pendingFocusItem=item; beginFocus(task.materialField); } } });
 els.focusMaterials.addEventListener("click",event => { const choice = event.target.closest("[data-field]"); if (choice) beginFocus(choice.dataset.field); });
 els.finishFocusButton.addEventListener("click",openFocusFinish);
-els.cancelFocusButton.addEventListener("click",cancelFocus);
+els.cancelFocusButton.addEventListener("click",openCancelFocus);
+els.continueAfterCancelButton.addEventListener("click",closeCancelFocus);
+els.confirmCancelFocusButton.addEventListener("click",cancelFocus);
 els.continueFocusButton.addEventListener("click",continueFocus);
 els.focusFinishForm.addEventListener("submit",saveFocusResult);
 els.rows.addEventListener("change",event => { if (event.target.matches(".status-select")) changeStatus(event.target); });
@@ -595,4 +625,4 @@ els.rows.addEventListener("click",event => {
   if (event.target.closest(".edit-topic")) openTopicModal(item);
   if (event.target.closest(".delete-topic")) openDeleteModal(item);
 });
-document.addEventListener("keydown",event => { if (event.key === "Escape") { if (!els.focusFinishModal.hidden) continueFocus(); else if (!els.focusStartModal.hidden) { els.focusStartModal.hidden = true; pendingFocusItem = null; } else if (!els.todayModal.hidden) els.todayModal.hidden=true; else if(!els.profileModal.hidden) closeProfile(); else if (!els.topicModal.hidden) closeTopicModal(); else if (!els.deleteModal.hidden) closeDeleteModal(); } });
+document.addEventListener("keydown",event => { if (event.key === "Escape") { if (!els.focusCancelModal.hidden) closeCancelFocus(); else if (!els.focusFinishModal.hidden) continueFocus(); else if (!els.focusStartModal.hidden) { els.focusStartModal.hidden = true; pendingFocusItem = null; } else if (!els.todayModal.hidden) els.todayModal.hidden=true; else if(!els.profileModal.hidden) closeProfile(); else if (!els.topicModal.hidden) closeTopicModal(); else if (!els.deleteModal.hidden) closeDeleteModal(); } });

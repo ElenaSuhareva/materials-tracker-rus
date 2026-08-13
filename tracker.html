@@ -65,7 +65,9 @@
     .eff-ring strong { position:relative; font-size:23px; }
     .task-list { display:grid; gap:8px; }
     .daily-task { display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; column-gap:10px; padding:10px 12px; border-radius:13px; background:#f5f2fa; }
-    .daily-task>span:first-child { align-self:center; justify-self:center; }
+    .task-check { width:22px; height:22px; align-self:center; justify-self:center; display:grid; place-items:center; padding:0; border:1px solid rgba(122,184,224,.7); border-radius:50%; background:transparent; color:#79d9d0; font:inherit; font-weight:900; cursor:pointer; transition:background-color .2s,border-color .2s,box-shadow .2s,transform .2s; }
+    .task-check:hover { transform:scale(1.08); border-color:#64d6c9; background:rgba(83,216,196,.12); }
+    .task-check:focus-visible { outline:3px solid rgba(160,112,236,.42); outline-offset:3px; }
     .daily-task>div { min-width:0; }
     .daily-task.done { opacity:.65; }
     .daily-task b { display:block; font-size:13px; }.daily-task small { color:var(--muted); }
@@ -209,9 +211,9 @@
     body.workspace-open:not(.focus-mode) #workspace .task-list { gap:6px; }
     body.workspace-open:not(.focus-mode) #workspace .daily-task { min-height:40px; grid-template-columns:30px minmax(0,1fr) auto; padding:7px 10px; border:1px solid rgba(144,180,225,.14); background:linear-gradient(90deg,rgba(11,31,63,.46),rgba(31,39,80,.38)); color:#e9f0ff; transition:transform .2s ease,border-color .2s ease,background-color .2s ease; }
     body.workspace-open:not(.focus-mode) #workspace .daily-task:hover { transform:translateX(2px); border-color:rgba(114,205,207,.34); background:linear-gradient(90deg,rgba(20,51,83,.62),rgba(47,47,97,.5)); }
-    body.workspace-open:not(.focus-mode) #workspace .daily-task>span:first-child { width:20px;height:20px;display:grid;place-items:center;border:1px solid rgba(122,184,224,.7);border-radius:50%;color:#79d9d0;font-weight:900; }
+    body.workspace-open:not(.focus-mode) #workspace .task-check { width:22px;height:22px; }
     body.workspace-open:not(.focus-mode) #workspace .daily-task.done { opacity:.82; border-color:rgba(73,210,174,.24); background:linear-gradient(90deg,rgba(22,91,84,.46),rgba(29,58,82,.4)); }
-    body.workspace-open:not(.focus-mode) #workspace .daily-task.done>span:first-child { border-color:#4dd0aa;background:#3eb68f;color:#fff;box-shadow:0 0 12px rgba(68,207,170,.3); }
+    body.workspace-open:not(.focus-mode) #workspace .daily-task.done>.task-check { border-color:#4dd0aa;background:#3eb68f;color:#fff;box-shadow:0 0 12px rgba(68,207,170,.3);line-height:1;text-indent:0;padding-bottom:2px; }
     body.workspace-open:not(.focus-mode) #workspace .daily-task small { color:#aebed5; }
     body.workspace-open:not(.focus-mode) #workspace .tiny-action { width:30px;height:30px;border-color:rgba(155,188,232,.25); background:rgba(27,52,88,.72); color:#c8e4ff; }
     body.workspace-open:not(.focus-mode) #workspace .tiny-action svg { width:16px;height:16px;display:block;margin:auto;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round; }

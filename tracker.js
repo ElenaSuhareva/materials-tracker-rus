@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js";
-import { addDoc, collection, deleteDoc, doc, getDocs, getFirestore, updateDoc } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, getFirestore, increment, query, runTransaction, serverTimestamp, setDoc, updateDoc, where } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBu3pE0y6T_HE1n7NdU41RgEmRDy4T0Xes",
@@ -17,7 +17,8 @@ const db = getFirestore(app);
 const stageFields = ["ruleNotes", "exerciseNotes", "board", "interactive", "homework"];
 const stageLabels = { ruleNotes: "Конспект темы", exerciseNotes: "Конспект заданий", board: "Доска", interactive: "Интерактив", homework: "ДЗ" };
 const scores = { "План": 0, "В работе": 50, "Готово": 100 };
-const elementIds = ["authLoading","loginView","workspace","loginForm","email","password","loginButton","loginError","logoutButton","workspaceError","search","sectionFilter","progressFilter","addTopicButton","rows","empty","count","topicModal","topicForm","topicModalTitle","topicModalIntro","topicSection","newSectionButton","newSectionField","newSectionName","topicRule","topicGrade","topicError","cancelTopicButton","saveTopicButton","deleteModal","deleteQuestion","deleteError","cancelDeleteButton","confirmDeleteButton","toast","focusPanel","focusTopic","focusMaterial","focusTimer","crystalScene","finishFocusButton","cancelFocusButton","focusStartModal","focusStartTopic","focusMaterials","cancelFocusStartButton","focusFinishModal","focusFinishForm","focusDuration","focusResult","focusFinishError","continueFocusButton","saveFocusButton","focusParticles"];
+const elementIds = ["authLoading","loginView","workspace","loginForm","email","password","loginButton","loginError","logoutButton","workspaceError","search","sectionFilter","progressFilter","addTopicButton","rows","empty","count","topicModal","topicForm","topicModalTitle","topicModalIntro","topicSection","newSectionButton","newSectionField","newSectionName","topicRule","topicGrade","topicError","cancelTopicButton","saveTopicButton","deleteModal","deleteQuestion","deleteError","cancelDeleteButton","confirmDeleteButton","toast","focusPanel","focusTopic","focusMaterial","focusTimer","crystalScene","finishFocusButton","cancelFocusButton","focusStartModal","focusStartTopic","focusMaterials","cancelFocusStartButton","focusFinishModal","focusFinishForm","focusDuration","focusResult","focusFinishError","continueFocusButton","saveFocusButton","focusParticles","profileButton","profileInitial","profileAvatar","profileLargeInitial","profileLargeAvatar","profileName","coinBalance","headerCoinBalance","profileCoinBalance","efficiencyRing","efficiencyValue","efficiencyNote","dailyTasks","todayModal","todayTopic","todayMaterials","cancelTodayButton","profileModal","profileSubtitle","profileCoins","profileMinutes","profileSessions","historyList","closeProfileButton"];
+elementIds.push("crystalImage");
 const els = Object.fromEntries(elementIds.map(id => [id, document.getElementById(id)]));
 let materials = [];
 let sections = [];
@@ -31,6 +32,11 @@ const focusStorageKey = "materialsTrackerFocusSession";
 let activeFocus = null;
 let pendingFocusItem = null;
 let focusTimerId = null;
+let profile = { displayName:"",coins:0,totalFocusMinutes:0,focusSessionsCount:0,completedTasksCount:0 };
+let dailyTasks = [];
+let rewardHistory = [];
+let pendingTodayItem = null;
+const encouragements = ["Отличная работа — ещё один шаг сделан.","Хороший темп. Продолжайте в своём ритме.","Маленький шаг тоже меняет общую картину.","Спокойно, последовательно, результативно.","Сегодняшний прогресс уже заметен.","Работа движется — это главное.","Прекрасно. Можно выбрать следующий шаг."];
 
 const authLoadingTimer = window.setTimeout(() => {
   els.authLoading.hidden = false;
@@ -63,6 +69,59 @@ function showToast(message) {
   els.toast.hidden = false;
   toastTimer = window.setTimeout(() => { els.toast.hidden = true; }, 2200);
 }
+function showRewardToast(message,coins) {
+  window.clearTimeout(toastTimer);
+  els.toast.innerHTML=`<span class="reward-toast"><img class="coin-icon reward" src="./assets/ui/coin.png" alt=""><span>${escapeHTML(message)} <strong>+${coins}</strong></span></span>`;
+  els.toast.hidden=false;
+  toastTimer=window.setTimeout(()=>{ els.toast.hidden=true; },2200);
+}
+function localDate() { const now=new Date(); return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`; }
+function safeKey(value) { return String(value).replace(/[^a-zA-Z0-9_-]/g,"_"); }
+function userPath(name) { return collection(db,"userProfiles",currentUser.uid,name); }
+function updateProfileUI() {
+  const name=profile.displayName || currentUser?.displayName || "Профиль";
+  const initial=name.slice(0,1).toLocaleUpperCase("ru"); const avatarPath=profile.role==="owner"?"./assets/ui/avatar.png":profile.role==="guest"?"./assets/ui/guest-avatar.png":"";
+  els.profileName.textContent=name; els.profileInitial.textContent=initial; els.profileLargeInitial.textContent=initial;
+  [[els.profileAvatar,els.profileInitial],[els.profileLargeAvatar,els.profileLargeInitial]].forEach(([image,fallback])=>{ image.onerror=()=>{ image.hidden=true; fallback.hidden=false; }; if(avatarPath){ image.hidden=false; fallback.hidden=true; image.src=avatarPath; }else{ image.removeAttribute("src"); image.hidden=true; fallback.hidden=false; } });
+  const coins=profile.coins||0; els.coinBalance.textContent=coins; els.profileCoins.textContent=coins; els.profileButton.setAttribute("aria-label",`Открыть профиль ${name}. Баланс: ${coins} монет`); els.headerCoinBalance.setAttribute("aria-label",`Баланс: ${coins} монет`); els.profileCoinBalance.setAttribute("aria-label",`Баланс: ${coins} монет`); els.profileMinutes.textContent=profile.totalFocusMinutes||0; els.profileSessions.textContent=profile.focusSessionsCount||0; els.profileSubtitle.textContent=name;
+}
+function renderDailyTasks() {
+  if (!dailyTasks.length) { els.dailyTasks.innerHTML='<p class="intro">План свободен — добавьте материал из действий темы.</p>'; return; }
+  els.dailyTasks.innerHTML=dailyTasks.map(task=>`<div class="daily-task ${task.completed?"done":""}" data-id="${escapeHTML(task.id)}"><span>${task.completed?"✓":"○"}</span><div><b>${escapeHTML(task.topicTitle)}</b><small>${escapeHTML(task.materialLabel)}</small></div><span><button class="tiny-action task-focus" type="button" title="Начать фокус" aria-label="Начать фокус">▶</button> <button class="tiny-action task-remove" type="button" title="Убрать из плана" aria-label="Убрать из плана">×</button></span></div>`).join("");
+}
+function renderEfficiency() { const total=dailyTasks.length; const completed=dailyTasks.filter(task=>task.completed).length; const percent=total?Math.round(completed/total*100):0; els.efficiencyRing.style.setProperty("--value",percent); els.efficiencyValue.textContent=`${percent}%`; els.efficiencyNote.textContent=total?`Выполнено ${completed} из ${total} задач на сегодня.`:"Сегодняшних задач пока нет."; }
+async function completeDailyTasks(materialDocumentId,materialField) {
+  const date=localDate();
+  const related=dailyTasks.filter(task=>task.date===date&&task.materialDocumentId===materialDocumentId&&task.materialField===materialField&&!task.completed);
+  if (!related.length) { renderEfficiency(); return true; }
+  try {
+    await Promise.all(related.map(task=>updateDoc(doc(db,"userProfiles",currentUser.uid,"dailyTasks",task.id),{completed:true,completedAt:serverTimestamp()})));
+    related.forEach(task=>{ task.completed=true; task.completedAt=new Date(); });
+    renderDailyTasks(); renderEfficiency();
+    return true;
+  } catch (error) {
+    console.error("Не удалось завершить сегодняшнюю задачу:",error);
+    const message="Материал сохранён как готовый, но задачу на сегодня отметить не удалось. Попробуйте ещё раз.";
+    els.workspaceError.textContent=message; showToast(message);
+    return false;
+  }
+}
+async function ensureProfile() {
+  const ref=doc(db,"userProfiles",currentUser.uid); const snap=await getDoc(ref);
+  const defaults={displayName:currentUser.displayName||"Пользователь",coins:0,totalFocusMinutes:0,focusSessionsCount:0,completedTasksCount:0,soundEnabled:false,animationsEnabled:true};
+  if (!snap.exists()) await setDoc(ref,{...defaults,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+  profile={...profile,...defaults,...(snap.exists()?snap.data():{})}; updateProfileUI();
+}
+async function loadPersonalData() {
+  await ensureProfile(); const date=localDate();
+  const [tasksSnap,rewardsSnap]=await Promise.all([getDocs(query(userPath("dailyTasks"),where("date","==",date))),getDocs(userPath("rewardEvents"))]);
+  dailyTasks=tasksSnap.docs.map(d=>({id:d.id,...d.data()})); rewardHistory=rewardsSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)); renderDailyTasks(); renderEfficiency(); updateProfileUI();
+}
+async function awardCoins(eventKey,eventType,coins,details={}) {
+  if (!coins) return 0; const eventRef=doc(db,"userProfiles",currentUser.uid,"rewardEvents",safeKey(eventKey)); const profileRef=doc(db,"userProfiles",currentUser.uid);
+  const awarded=await runTransaction(db,async transaction=>{ if ((await transaction.get(eventRef)).exists()) return 0; transaction.set(eventRef,{eventKey,eventType,coins,...details,createdAt:serverTimestamp()}); transaction.set(profileRef,{coins:increment(coins),updatedAt:serverTimestamp()},{merge:true}); return coins; });
+  if (awarded) { profile.coins=(profile.coins||0)+awarded; updateProfileUI(); showRewardToast(encouragements[Math.floor(Math.random()*encouragements.length)],awarded); } return awarded;
+}
 function statusOptions(selected) { return Object.keys(scores).map(status => `<option value="${status}" ${status === selected ? "selected" : ""}>${status}</option>`).join(""); }
 function sectionOptions(selected = "") { return sections.map(value => `<option value="${escapeHTML(value)}" ${value === selected ? "selected" : ""}>${escapeHTML(value)}</option>`).join(""); }
 
@@ -83,7 +142,7 @@ function render() {
       return `<td><select class="status-select ${statusClass(value)}" data-document="${escapeHTML(item.documentId)}" data-field="${field}" aria-label="${escapeHTML(stageLabels[field])} для ${escapeHTML(item.rule)}">${statusOptions(value)}</select></td>`;
     }).join("");
     const focused = activeFocus?.documentId === item.documentId ? " focus-active" : "";
-    return `<tr class="${focused}" style="animation-delay:${Math.min(index * 30,240)}ms" data-document="${escapeHTML(item.documentId)}"><td class="row-number">${rowNumberOffset + index + 1}</td><td class="rule">${escapeHTML(item.rule)}</td><td>${escapeHTML(item.grade)}</td>${statuses}<td><div class="row-progress ${progress === 100 ? "complete" : ""}" style="--progress:${progress}%"><span class="bar"><i></i></span><span class="percent">${progress}%</span></div><div class="save-state" aria-live="polite"></div></td><td class="actions"><span class="action-buttons"><button class="icon-button focus-button start-focus" type="button" title="Начать работу" aria-label="Начать работу">▶</button><button class="icon-button edit-topic" type="button" title="Редактировать" aria-label="Редактировать тему ${escapeHTML(item.rule)}"><span class="pencil-icon">✎</span></button><button class="icon-button delete-topic" type="button" title="Удалить" aria-label="Удалить тему ${escapeHTML(item.rule)}">×</button></span></td></tr>`;
+    return `<tr class="${focused}" style="animation-delay:${Math.min(index * 30,240)}ms" data-document="${escapeHTML(item.documentId)}"><td class="row-number">${rowNumberOffset + index + 1}</td><td class="rule">${escapeHTML(item.rule)}</td><td>${escapeHTML(item.grade)}</td>${statuses}<td><div class="row-progress ${progress === 100 ? "complete" : ""}" style="--progress:${progress}%"><span class="bar"><i></i></span><span class="percent">${progress}%</span></div><div class="save-state" aria-live="polite"></div></td><td class="actions"><span class="action-buttons"><button class="icon-button focus-button start-focus" type="button" title="Начать работу" aria-label="Начать работу">▶</button><button class="icon-button add-today" type="button" title="Добавить на сегодня" aria-label="Добавить тему на сегодня">⌁</button><button class="icon-button edit-topic" type="button" title="Редактировать" aria-label="Редактировать тему ${escapeHTML(item.rule)}"><span class="pencil-icon">✎</span></button><button class="icon-button delete-topic" type="button" title="Удалить" aria-label="Удалить тему ${escapeHTML(item.rule)}">×</button></span></td></tr>`;
   }).join("");
   els.empty.style.display = filtered.length ? "none" : "block";
   els.count.textContent = `Показано ${filtered.length} из ${materials.length} тем`;
@@ -116,6 +175,7 @@ async function loadWorkspaceData() {
     sortMaterials();
     updateSectionControls();
     restoreFocusSession();
+    await loadPersonalData().catch(error=>{ console.error("Не удалось загрузить профиль и задачи:",error); els.workspaceError.textContent="Трекер загружен, но профиль и задачи недоступны. Проверьте правила доступа Firestore."; });
     render();
   } catch (error) {
     console.error("Не удалось загрузить рабочее пространство:",error);
@@ -141,6 +201,13 @@ async function changeStatus(select) {
   state.textContent = "Сохраняю…";
   try {
     await updateDoc(doc(db,"materials",item.documentId), { [field]: next });
+    const forward=scores[next]>scores[previous];
+    if (next === "Готово") {
+      await completeDailyTasks(item.documentId,field);
+      await awardCoins(`material-ready:${item.documentId}:${field}`,"material_ready",10,{materialDocumentId:item.documentId,materialField:field,taskId:null,sessionId:null});
+      if (stageFields.every(name=>name===field?next==="Готово":item[name]==="Готово")) await awardCoins(`topic-ready:${item.documentId}`,"topic_ready",25,{materialDocumentId:item.documentId,materialField:null,taskId:null,sessionId:null});
+    }
+    if (forward) await setDoc(doc(db,"userProfiles",currentUser.uid,"dailyStats",localDate()),{statusPoints:increment(8),materialPoints:next==="Готово"?increment(12):increment(0),topicPoints:next==="Готово"&&stageFields.every(name=>name===field||item[name]==="Готово")?increment(20):increment(0)},{merge:true});
     state.className = "save-state saved";
     state.textContent = "Сохранено";
     window.setTimeout(() => { if (state.textContent === "Сохранено") state.textContent = ""; },1800);
@@ -301,6 +368,7 @@ function updateFocusDisplay() {
   const elapsed = Date.now() - activeFocus.startedAt;
   els.focusTimer.textContent = formatDuration(elapsed);
   els.crystalScene.className = `crystal-scene stage-${crystalStage(elapsed)}`;
+  const minutes=elapsed/60000; const asset=minutes>=30?"30":minutes>=20?"20":minutes>=10?"10":"05"; els.crystalImage.src=`./assets/focus-crystals/crystal-${asset}-min.png`;
 }
 
 function startFocusClock() {
@@ -344,6 +412,13 @@ function openFocusStart(item) {
   els.focusStartTopic.textContent = item.rule;
   els.focusMaterials.innerHTML = stageFields.map(field => `<button class="material-choice" type="button" data-field="${field}">▶ <span>${escapeHTML(stageLabels[field] === "Конспект темы" ? "Конспект правила" : stageLabels[field])}</span></button>`).join("");
   els.focusStartModal.hidden = false;
+}
+
+function openToday(item) { pendingTodayItem=item; els.todayTopic.textContent=item.rule; els.todayMaterials.innerHTML=stageFields.map(field=>`<button class="material-choice" type="button" data-today-field="${field}"><span>＋</span><span>${escapeHTML(stageLabels[field])}</span></button>`).join(""); els.todayModal.hidden=false; }
+async function addToday(field) {
+  if (!pendingTodayItem||!stageFields.includes(field)) return; const date=localDate(); const id=safeKey(`${date}_${pendingTodayItem.documentId}_${field}`); const ref=doc(db,"userProfiles",currentUser.uid,"dailyTasks",id);
+  if ((await getDoc(ref)).exists()) { showToast("Задача уже добавлена на сегодня"); els.todayModal.hidden=true; return; }
+  const value={materialDocumentId:pendingTodayItem.documentId,topicTitle:pendingTodayItem.rule,materialField:field,materialLabel:stageLabels[field],date,completed:pendingTodayItem[field]==="Готово",createdAt:serverTimestamp(),completedAt:pendingTodayItem[field]==="Готово"?serverTimestamp():null}; await setDoc(ref,value); dailyTasks.push({id,...value}); renderDailyTasks(); renderEfficiency(); els.todayModal.hidden=true; showToast("Добавлено в план на сегодня");
 }
 
 function beginFocus(field) {
@@ -397,11 +472,21 @@ async function saveFocusResult(event) {
   els.continueFocusButton.disabled = true;
   els.saveFocusButton.textContent = "Сохраняю…";
   try {
+    const endedAt=Date.now(); const durationSeconds=Math.max(1,Math.floor((endedAt-activeFocus.startedAt)/1000)); const previous=item?normalizeStatus(item[activeFocus.materialField]):"План";
     if (result !== "keep") {
       if (!item) throw new Error("material-not-found");
       await updateDoc(doc(db,"materials",activeFocus.documentId),{ [activeFocus.materialField]:result });
       item[activeFocus.materialField] = result;
     }
+    if (result === "Готово") await completeDailyTasks(activeFocus.documentId,activeFocus.materialField);
+    const sessionId=activeFocus.sessionId||safeKey(`${activeFocus.startedAt}_${activeFocus.documentId}_${activeFocus.materialField}`); activeFocus.sessionId=sessionId; localStorage.setItem(focusStorageKey,JSON.stringify(activeFocus));
+    const sessionRef=doc(db,"userProfiles",currentUser.uid,"focusSessions",sessionId); const after=result==="keep"?previous:result; const timeCoins=Math.min(6,Math.floor(durationSeconds/600)); const quickCoins=durationSeconds<600&&scores[after]>scores[previous]?3:0;
+    const sessionExists=(await getDoc(sessionRef)).exists();
+    await setDoc(sessionRef,{materialDocumentId:activeFocus.documentId,topicTitle:activeFocus.topicName,materialField:activeFocus.materialField,materialLabel:activeFocus.materialName,startedAt:new Date(activeFocus.startedAt),endedAt:serverTimestamp(),durationSeconds,statusBefore:previous,statusAfter:after,coinsAwarded:timeCoins+quickCoins,completed:true});
+    if (!sessionExists) { await setDoc(doc(db,"userProfiles",currentUser.uid),{totalFocusMinutes:increment(Math.floor(durationSeconds/60)),focusSessionsCount:increment(1),updatedAt:serverTimestamp()},{merge:true}); profile.totalFocusMinutes=(profile.totalFocusMinutes||0)+Math.floor(durationSeconds/60); profile.focusSessionsCount=(profile.focusSessionsCount||0)+1; }
+    await awardCoins(`focus-time:${sessionRef.id}`,"focus_time",timeCoins,{materialDocumentId:activeFocus.documentId,materialField:activeFocus.materialField,taskId:null,sessionId:sessionRef.id});
+    if (quickCoins) await awardCoins(`quick:${activeFocus.documentId}:${activeFocus.materialField}`,"quick_progress",quickCoins,{materialDocumentId:activeFocus.documentId,materialField:activeFocus.materialField,taskId:null,sessionId:sessionRef.id});
+    await setDoc(doc(db,"userProfiles",currentUser.uid,"dailyStats",localDate()),{focusPoints:increment(Math.min(24,Math.floor(durationSeconds/600)*4))},{merge:true}); updateProfileUI();
     localStorage.removeItem(focusStorageKey);
     els.crystalScene.classList.add("celebrate");
     document.body.classList.add("focus-celebrate");
@@ -474,6 +559,11 @@ els.cancelTopicButton.addEventListener("click",closeTopicModal);
 els.cancelDeleteButton.addEventListener("click",closeDeleteModal);
 els.confirmDeleteButton.addEventListener("click",confirmDelete);
 els.cancelFocusStartButton.addEventListener("click",() => { els.focusStartModal.hidden = true; pendingFocusItem = null; });
+els.cancelTodayButton.addEventListener("click",()=>{ els.todayModal.hidden=true; pendingTodayItem=null; });
+els.todayMaterials.addEventListener("click",event=>{ const button=event.target.closest("[data-today-field]"); if(button) addToday(button.dataset.todayField); });
+els.profileButton.addEventListener("click",()=>{ els.historyList.innerHTML=rewardHistory.length?rewardHistory.slice(0,30).map(item=>`<div class="history-item"><span class="coin-balance" aria-label="Начислено ${item.coins} монет"><img class="coin-icon" src="./assets/ui/coin.png" alt=""><span>+${item.coins}</span></span><time>${item.createdAt?.toDate?.().toLocaleString("ru-RU")||"Недавно"}</time>${escapeHTML(item.eventType.replaceAll("_"," "))}</div>`).join(""):'<p class="intro">История появится после завершённой работы.</p>'; els.profileModal.hidden=false; });
+els.closeProfileButton.addEventListener("click",()=>{ els.profileModal.hidden=true; });
+els.dailyTasks.addEventListener("click",async event=>{ const card=event.target.closest(".daily-task"); const task=card&&dailyTasks.find(value=>value.id===card.dataset.id); if(!task)return; if(event.target.closest(".task-remove")){ await deleteDoc(doc(db,"userProfiles",currentUser.uid,"dailyTasks",task.id)); dailyTasks=dailyTasks.filter(value=>value.id!==task.id); renderDailyTasks(); renderEfficiency(); showToast("Убрано из плана на сегодня"); } if(event.target.closest(".task-focus")){ const item=materials.find(value=>value.documentId===task.materialDocumentId); if(item){ pendingFocusItem=item; beginFocus(task.materialField); } } });
 els.focusMaterials.addEventListener("click",event => { const choice = event.target.closest("[data-field]"); if (choice) beginFocus(choice.dataset.field); });
 els.finishFocusButton.addEventListener("click",openFocusFinish);
 els.cancelFocusButton.addEventListener("click",cancelFocus);
@@ -485,7 +575,8 @@ els.rows.addEventListener("click",event => {
   const item = row && materials.find(value => value.documentId === row.dataset.document);
   if (!item) return;
   if (event.target.closest(".start-focus")) openFocusStart(item);
+  if (event.target.closest(".add-today")) openToday(item);
   if (event.target.closest(".edit-topic")) openTopicModal(item);
   if (event.target.closest(".delete-topic")) openDeleteModal(item);
 });
-document.addEventListener("keydown",event => { if (event.key === "Escape") { if (!els.focusFinishModal.hidden) continueFocus(); else if (!els.focusStartModal.hidden) { els.focusStartModal.hidden = true; pendingFocusItem = null; } else if (!els.topicModal.hidden) closeTopicModal(); else if (!els.deleteModal.hidden) closeDeleteModal(); } });
+document.addEventListener("keydown",event => { if (event.key === "Escape") { if (!els.focusFinishModal.hidden) continueFocus(); else if (!els.focusStartModal.hidden) { els.focusStartModal.hidden = true; pendingFocusItem = null; } else if (!els.todayModal.hidden) els.todayModal.hidden=true; else if(!els.profileModal.hidden) els.profileModal.hidden=true; else if (!els.topicModal.hidden) closeTopicModal(); else if (!els.deleteModal.hidden) closeDeleteModal(); } });

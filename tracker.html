@@ -43,6 +43,33 @@
 
     .shell { width: min(1500px,100%); margin: 0 auto; padding: 40px 28px 64px; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+    .header-actions { display:flex; align-items:center; gap:10px; }
+    .profile-chip { height:46px; display:flex; align-items:center; gap:10px; padding:0 14px 0 8px; border:1px solid rgba(255,255,255,.16); border-radius:14px; background:#151f3a; color:#fff; cursor:pointer; box-shadow:var(--shadow); }
+    .avatar-wrap { position:relative; width:40px; height:40px; flex:0 0 auto; border:1px solid #71d8d0; border-radius:50%; overflow:hidden; background:linear-gradient(135deg,#22d6bb,#7358dc); }
+    .avatar-wrap.large { width:80px; height:80px; }
+    .avatar-image { width:100%; height:100%; display:block; border-radius:50%; object-fit:cover; }
+    .avatar-fallback { position:absolute; inset:0; display:grid; place-items:center; color:#fff; font-weight:900; font-size:16px; }
+    .avatar-wrap.large .avatar-fallback { font-size:30px; }
+    .profile-identity { display:flex; align-items:center; gap:14px; margin:14px 0 18px; }
+    .profile-identity .intro { margin:0; }
+    .coin-balance { display:inline-flex; align-items:center; gap:5px; font-weight:850; white-space:nowrap; }
+    .coin-icon { width:20px; height:20px; display:inline-block; flex:0 0 auto; object-fit:contain; }
+    .coin-icon.reward { width:28px; height:28px; }
+    .dashboard { display:grid; grid-template-columns:.8fr 1.2fr; gap:14px; margin-top:26px; }
+    .dash-card { padding:20px; border:1px solid rgba(255,255,255,.8); border-radius:20px; background:rgba(255,255,255,.88); box-shadow:var(--shadow); }
+    .dash-card h2 { margin:0 0 14px; font-size:18px; }
+    .efficiency { display:grid; grid-template-columns:92px 1fr; align-items:center; gap:18px; }
+    .eff-ring { --value:0; width:88px; height:88px; display:grid; place-items:center; border-radius:50%; background:conic-gradient(#42cdb6 calc(var(--value)*1%),#ece8f3 0); position:relative; }
+    .eff-ring::before { content:""; position:absolute; inset:10px; border-radius:50%; background:#fff; }
+    .eff-ring strong { position:relative; font-size:23px; }
+    .task-list { display:grid; gap:8px; }
+    .daily-task { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; padding:10px 12px; border-radius:13px; background:#f5f2fa; }
+    .daily-task.done { opacity:.65; }
+    .daily-task b { display:block; font-size:13px; }.daily-task small { color:var(--muted); }
+    .tiny-action { width:34px;height:34px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer; }
+    .profile-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:18px 0; }
+    .profile-stat { padding:14px;border-radius:14px;background:#f5f2fa; }.profile-stat strong{display:block;font-size:22px}.profile-stat span{font-size:11px;color:var(--muted)}
+    .history-list { display:grid;gap:8px;max-height:310px;overflow:auto }.history-item{padding:12px;border:1px solid var(--line);border-radius:12px;font-size:13px}.history-item time{display:block;color:var(--muted);font-size:11px}.history-item .coin-balance{float:right}
     .account { margin: 14px 0 0; color: var(--muted); }
     .account strong { color: var(--ink); }
     .panel { overflow: hidden; margin-top: 34px; border: 1px solid rgba(255,255,255,.9); border-radius: 28px; background: var(--paper); box-shadow: var(--shadow); backdrop-filter: blur(18px); }
@@ -97,6 +124,7 @@
     .live-dot { width: 10px; height: 10px; border-radius: 50%; background: #54aa83; box-shadow: 0 0 0 6px rgba(84,170,131,.12); animation: live-pulse 1.8s ease-in-out infinite; }
     .focus-actions { display: flex; gap: 8px; }
     .crystal-scene { position: relative; width: 72px; height: 64px; display: grid; place-items: end center; transition: opacity .35s ease; }
+    .crystal-image { width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(112,203,176,.5));animation:crystal-pulse 2.8s ease-in-out infinite; }
     .crystal { --scale: .62; position: relative; width: 27px; height: 43px; transform: scale(var(--scale)); transform-origin: bottom; clip-path: polygon(50% 0,88% 25%,100% 72%,50% 100%,0 72%,12% 25%); background: linear-gradient(135deg,#ab93e8 0 34%,#70cbb0 35% 66%,#6652a5 67%); filter: drop-shadow(0 0 8px rgba(119,95,185,.42)); transition: transform .8s,filter .8s; animation: crystal-pulse 2.8s ease-in-out infinite; }
     .crystal::after { content: ""; position: absolute; inset: 17% 27% 20% 48%; background: rgba(255,255,255,.35); clip-path: polygon(0 0,100% 23%,58% 100%); opacity: 0; transition: opacity .6s; }
     .crystal-scene.stage-2 .crystal { --scale: .78; } .crystal-scene.stage-3 .crystal { --scale: .9; filter: drop-shadow(0 0 13px rgba(119,95,185,.58)); } .crystal-scene.stage-3 .crystal::after { opacity: 1; }
@@ -111,6 +139,7 @@
     .material-choice:hover { border-color: #cfc5e1; background: var(--accent-soft); }
     .finish-duration { margin: 16px 0; padding: 14px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-dark); font-weight: 750; }
     .toast { position: fixed; right: 24px; bottom: 24px; z-index: 30; max-width: min(380px,calc(100vw - 32px)); padding: 12px 16px; border-radius: 13px; background: var(--ink); color: #fff; box-shadow: var(--shadow); font-size: 13px; font-weight: 750; animation: toast-in .25s ease both; }
+    .reward-toast { display:flex; align-items:center; gap:10px; }
     .modal { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: rgba(40,37,52,.38); backdrop-filter: blur(5px); }
     .modal-card { width: min(520px,100%); max-height: calc(100vh - 40px); overflow: auto; padding: 28px; border: 1px solid rgba(255,255,255,.9); border-radius: 24px; background: #fff; box-shadow: 0 28px 80px rgba(40,37,52,.22); }
     .modal-card h2 { margin: 0; font-size: 27px; letter-spacing: -.035em; }
@@ -136,9 +165,9 @@
     @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; } }
 
     @media (max-width: 1050px) { .toolbar { grid-template-columns: 1fr 1fr; } .toolbar input { grid-column: 1/-1; } }
-    @media (max-width: 900px) { .shell { padding: 30px 18px 40px; } }
+    @media (max-width: 900px) { .shell { padding: 30px 18px 40px; } .dashboard{grid-template-columns:1fr;} }
     @media (max-width: 700px) { .focus-panel { grid-template-columns: auto 1fr; } .focus-actions { grid-column: 1/-1; } }
-    @media (max-width: 560px) { .auth-shell { padding: 12px; } .auth-card { padding: 25px 20px; border-radius: 21px; } .shell { padding: 24px 12px 32px; } .header { flex-direction: column; } .header .button { width: 100%; } .toolbar { grid-template-columns: 1fr; } .toolbar input { grid-column: auto; } .panel { border-radius: 20px; } .section-picker { grid-template-columns: 1fr; } .modal { padding: 10px; } .modal-card { padding: 22px 18px; border-radius: 20px; } .modal-actions { flex-direction: column-reverse; } .modal-actions .button { width: 100%; } .toast { right: 16px; bottom: 16px; } .focus-panel { grid-template-columns: 1fr; text-align: center; } .crystal-scene { margin: auto; } .focus-clock,.focus-actions { justify-content: center; } }
+    @media (max-width: 560px) { .auth-shell { padding: 12px; } .auth-card { padding: 25px 20px; border-radius: 21px; } .shell { padding: 24px 12px 32px; } .header { flex-direction: column; } .header-actions{width:100%;flex-wrap:wrap}.profile-chip{flex:1}.header .button { flex:1; } .toolbar { grid-template-columns: 1fr; } .toolbar input { grid-column: auto; } .panel { border-radius: 20px; } .section-picker { grid-template-columns: 1fr; } .modal { padding: 10px; } .modal-card { padding: 22px 18px; border-radius: 20px; } .modal-actions { flex-direction: column-reverse; } .modal-actions .button { width: 100%; } .toast { right: 16px; bottom: 16px; } .focus-panel { grid-template-columns: 1fr; text-align: center; } .crystal-scene { margin: auto; } .focus-clock,.focus-actions { justify-content: center; } .efficiency{grid-template-columns:74px 1fr}.eff-ring{width:72px;height:72px}.profile-grid{grid-template-columns:1fr;} }
   </style>
 </head>
 <body>
@@ -160,11 +189,15 @@
   <main class="shell" id="workspace" hidden>
     <header class="header">
       <h1>Мой трекер материалов</h1>
-      <button class="button secondary" id="logoutButton" type="button">Выйти</button>
+      <div class="header-actions"><button class="profile-chip" id="profileButton" type="button" aria-label="Открыть профиль"><span class="avatar-wrap"><span class="avatar-fallback" id="profileInitial">Я</span><img class="avatar-image" id="profileAvatar" alt="" hidden></span><span id="profileName">Профиль</span><span class="coin-balance" id="headerCoinBalance" aria-label="Баланс: 0 монет"><img class="coin-icon" src="./assets/ui/coin.png" alt=""><span id="coinBalance">0</span></span></button><button class="button secondary" id="logoutButton" type="button">Выйти</button></div>
     </header>
     <p class="message" id="workspaceError" role="alert" aria-live="polite"></p>
+    <section class="dashboard">
+      <div class="dash-card efficiency"><div class="eff-ring" id="efficiencyRing"><strong id="efficiencyValue">0%</strong></div><div><h2>Эффективность за день</h2><p class="intro" id="efficiencyNote">Любое спокойное продвижение считается.</p></div></div>
+      <div class="dash-card"><h2>Сегодняшние задачи</h2><div class="task-list" id="dailyTasks"><p class="intro">Добавьте материал из действий темы.</p></div></div>
+    </section>
     <section class="focus-panel" id="focusPanel" hidden>
-      <div class="crystal-scene stage-1" id="crystalScene"><span class="crystal"></span><span class="crystal-baby"></span></div>
+      <div class="crystal-scene stage-1" id="crystalScene"><img class="crystal-image" id="crystalImage" src="./assets/focus-crystals/crystal-05-min.png" alt="Растущий кристалл фокуса"><span class="crystal" hidden></span><span class="crystal-baby" hidden></span></div>
       <div class="focus-copy"><small>Сейчас работаю</small><strong id="focusTopic"></strong><span id="focusMaterial"></span></div>
       <div><div class="focus-clock"><span class="live-dot" aria-hidden="true"></span><time id="focusTimer">00:00:00</time></div><div class="focus-actions"><button class="button" id="finishFocusButton" type="button">Завершить</button><button class="button secondary" id="cancelFocusButton" type="button">Отменить</button></div></div>
     </section>
@@ -222,6 +255,8 @@
   </div>
 
   <div class="focus-particles" id="focusParticles" hidden><i></i><i></i><i></i><i></i></div>
+  <div class="modal" id="todayModal" role="dialog" aria-modal="true" aria-labelledby="todayTitle" hidden><div class="modal-card"><h2 id="todayTitle">Добавить на сегодня</h2><p class="intro" id="todayTopic"></p><div class="focus-materials" id="todayMaterials"></div><div class="modal-actions"><button class="button secondary" id="cancelTodayButton" type="button">Отмена</button></div></div></div>
+  <div class="modal" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileTitle" hidden><div class="modal-card"><h2 id="profileTitle">Профиль</h2><div class="profile-identity"><span class="avatar-wrap large"><span class="avatar-fallback" id="profileLargeInitial">Я</span><img class="avatar-image" id="profileLargeAvatar" alt="" hidden></span><p class="intro" id="profileSubtitle"></p></div><div class="profile-grid"><div class="profile-stat"><strong class="coin-balance" id="profileCoinBalance" aria-label="Баланс: 0 монет"><img class="coin-icon" src="./assets/ui/coin.png" alt=""><span id="profileCoins">0</span></strong><span>монет</span></div><div class="profile-stat"><strong id="profileMinutes">0</strong><span>минут в фокусе</span></div><div class="profile-stat"><strong id="profileSessions">0</strong><span>сессий завершено</span></div></div><h3>История</h3><div class="history-list" id="historyList"></div><div class="modal-actions"><button class="button secondary" id="closeProfileButton" type="button">Закрыть</button></div></div></div>
 
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   <script type="module" src="./tracker.js"></script>

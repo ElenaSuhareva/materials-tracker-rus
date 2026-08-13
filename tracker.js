@@ -558,6 +558,7 @@ onAuthStateChanged(auth,user => {
   window.clearTimeout(authLoadingTimer);
   els.authLoading.hidden = true;
   currentUser = user;
+  document.body.classList.toggle("workspace-open",Boolean(user));
   els.loginView.hidden = Boolean(user);
   els.workspace.hidden = !user;
   els.loginError.textContent = "";

@@ -166,10 +166,68 @@
     @keyframes scatter { to { transform: translate(var(--scatter-x,35px),var(--scatter-y,-45px)) scale(.2); opacity: 0; } }
     @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation: none !important; transition: none !important; } }
 
-    @media (max-width: 1050px) { .toolbar { grid-template-columns: 1fr 1fr; } .toolbar input { grid-column: 1/-1; } }
+    /* Главный экран: мягкое северное сияние */
+    body.workspace-open:not(.focus-mode) { color:#eef3ff; background:#07162d; overflow-x:hidden; }
+    body.workspace-open:not(.focus-mode)::before,
+    body.workspace-open:not(.focus-mode)::after { content:""; position:fixed; z-index:-2; pointer-events:none; filter:blur(28px); opacity:.72; }
+    body.workspace-open:not(.focus-mode)::before { inset:-18% -12% 22% -10%; background:radial-gradient(ellipse at 20% 45%,rgba(85,95,225,.56),transparent 38%),radial-gradient(ellipse at 55% 32%,rgba(16,205,183,.42),transparent 32%),radial-gradient(ellipse at 82% 58%,rgba(171,77,231,.4),transparent 34%); animation:aurora-drift 24s ease-in-out infinite alternate; }
+    body.workspace-open:not(.focus-mode)::after { inset:38% -18% -25% 8%; background:radial-gradient(ellipse at 18% 48%,rgba(43,146,218,.36),transparent 36%),radial-gradient(ellipse at 70% 35%,rgba(139,78,211,.28),transparent 38%); opacity:.5; animation:aurora-drift 30s ease-in-out -10s infinite alternate-reverse; }
+    body.workspace-open:not(.focus-mode) #workspace { width:min(1460px,calc(100% - 28px)); margin:14px auto 34px; padding:24px 22px 30px; border:1px solid rgba(125,184,245,.42); border-radius:22px; background:linear-gradient(145deg,rgba(18,42,78,.76),rgba(17,34,68,.64)); box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 26px 80px rgba(0,7,24,.42),0 0 50px rgba(83,103,219,.1); backdrop-filter:blur(22px) saturate(1.15); }
+    body.workspace-open:not(.focus-mode) #workspace .header { align-items:center; padding:0 2px 18px; border-bottom:1px solid rgba(166,196,237,.12); }
+    body.workspace-open:not(.focus-mode) #workspace h1 { position:relative; padding-left:39px; color:#f4f5ff; font-size:clamp(25px,3vw,34px); font-weight:600; letter-spacing:-.035em; text-shadow:0 0 24px rgba(185,175,255,.22); }
+    body.workspace-open:not(.focus-mode) #workspace h1::before { content:"✦"; position:absolute; left:2px; top:50%; color:#75e0da; font-size:27px; transform:translateY(-52%); text-shadow:-8px -7px 0 #b899ff,0 0 16px rgba(91,226,215,.7); }
+    body.workspace-open:not(.focus-mode) #workspace .profile-chip { height:48px; padding-right:13px; border-color:rgba(139,195,241,.28); background:rgba(10,28,58,.64); box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 8px 28px rgba(0,6,25,.2); }
+    body.workspace-open:not(.focus-mode) #workspace .profile-chip:hover { border-color:rgba(118,226,213,.56); background:rgba(18,43,79,.78); }
+    body.workspace-open:not(.focus-mode) #workspace .header-actions>.button { height:48px; border:1px solid rgba(139,195,241,.22); background:rgba(12,30,61,.58); color:#c9d7ec; }
+    body.workspace-open:not(.focus-mode) #workspace .dashboard { grid-template-columns:minmax(280px,.85fr) minmax(420px,1.15fr); gap:16px; margin-top:18px; }
+    body.workspace-open:not(.focus-mode) #workspace .dash-card { min-height:170px; padding:18px 20px; border:1px solid rgba(149,192,238,.25); border-radius:16px; background:linear-gradient(135deg,rgba(29,55,94,.62),rgba(45,43,91,.45)); box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 12px 32px rgba(0,8,28,.17); backdrop-filter:blur(16px); }
+    body.workspace-open:not(.focus-mode) #workspace .dash-card:last-child { background:radial-gradient(circle at 78% 35%,rgba(177,79,215,.22),transparent 44%),linear-gradient(135deg,rgba(25,58,91,.63),rgba(52,42,91,.48)); }
+    body.workspace-open:not(.focus-mode) #workspace .dash-card h2 { color:#f1f3ff; font-size:16px; font-weight:700; }
+    body.workspace-open:not(.focus-mode) #workspace .dash-card .intro { color:#aebed8; }
+    body.workspace-open:not(.focus-mode) #workspace .eff-ring { width:104px; height:104px; background:conic-gradient(#54d8c2 calc(var(--value)*1%),#9671e7 calc(var(--value)*1%),rgba(130,157,200,.18) 0); box-shadow:0 0 24px rgba(73,215,194,.18); }
+    body.workspace-open:not(.focus-mode) #workspace .eff-ring::before { inset:11px; background:#17335d; box-shadow:inset 0 0 18px rgba(4,17,41,.38); }
+    body.workspace-open:not(.focus-mode) #workspace .eff-ring strong { color:#f1f8ff; font-size:25px; }
+    body.workspace-open:not(.focus-mode) #workspace .daily-task { border:1px solid rgba(144,180,225,.13); background:rgba(11,31,63,.4); color:#e9f0ff; }
+    body.workspace-open:not(.focus-mode) #workspace .daily-task.done { opacity:.68; background:rgba(25,76,77,.38); }
+    body.workspace-open:not(.focus-mode) #workspace .daily-task small { color:#aebed5; }
+    body.workspace-open:not(.focus-mode) #workspace .tiny-action { border-color:rgba(155,188,232,.25); background:rgba(27,52,88,.72); color:#c8e4ff; }
+    body.workspace-open:not(.focus-mode) #workspace .panel { margin-top:18px; border:1px solid rgba(139,188,236,.24); border-radius:16px; background:rgba(13,35,69,.58); box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 18px 42px rgba(0,7,25,.22); backdrop-filter:blur(18px); }
+    body.workspace-open:not(.focus-mode) #workspace .toolbar { grid-template-columns:minmax(240px,1fr) 205px 220px auto; gap:11px; padding:14px 16px; border-color:rgba(156,192,233,.14); background:rgba(12,31,62,.44); }
+    body.workspace-open:not(.focus-mode) #workspace .control { border-color:rgba(140,181,228,.23); background-color:rgba(13,34,68,.62); color:#e6edfb; }
+    body.workspace-open:not(.focus-mode) #workspace .control::placeholder { color:#8fa3c1; }
+    body.workspace-open:not(.focus-mode) #workspace .control:hover { border-color:rgba(120,214,211,.48); background-color:rgba(19,44,81,.78); }
+    body.workspace-open:not(.focus-mode) #workspace .control:focus { border-color:#70d6d0; background-color:rgba(18,42,79,.94); box-shadow:0 0 0 3px rgba(85,212,202,.12),0 0 18px rgba(94,129,226,.12); }
+    body.workspace-open:not(.focus-mode) #workspace select.control option { background:#142c53; color:#eef3ff; }
+    body.workspace-open:not(.focus-mode) #workspace #addTopicButton { background:linear-gradient(110deg,#4ed7c3,#9371ec 58%,#c36ee1); box-shadow:0 8px 24px rgba(116,94,220,.26),inset 0 1px 0 rgba(255,255,255,.24); }
+    body.workspace-open:not(.focus-mode) #workspace #addTopicButton:hover { box-shadow:0 12px 30px rgba(116,94,220,.36),0 0 20px rgba(69,213,190,.14); }
+    body.workspace-open:not(.focus-mode) #workspace .table-wrap { scrollbar-color:rgba(132,164,211,.55) rgba(7,22,48,.3); }
+    body.workspace-open:not(.focus-mode) #workspace table { color:#dce7f8; }
+    body.workspace-open:not(.focus-mode) #workspace th { border-color:rgba(145,183,226,.14); background:rgba(14,36,70,.94); color:#93a9c8; backdrop-filter:blur(16px); }
+    body.workspace-open:not(.focus-mode) #workspace td { border-color:rgba(141,177,217,.105); }
+    body.workspace-open:not(.focus-mode) #workspace tbody tr:hover { background:rgba(69,95,149,.18); }
+    body.workspace-open:not(.focus-mode) #workspace .row-number { color:#8095b4; }
+    body.workspace-open:not(.focus-mode) #workspace .rule { color:#eef3fd; }
+    body.workspace-open:not(.focus-mode) #workspace .status-select { color-scheme:dark; }
+    body.workspace-open:not(.focus-mode) #workspace .status-select.plan { color:#d3d6e8; border-color:rgba(181,179,219,.22); background:rgba(111,112,158,.34); }
+    body.workspace-open:not(.focus-mode) #workspace .status-select.work { color:#e2efff; border-color:rgba(81,167,235,.3); background:rgba(42,124,194,.55); }
+    body.workspace-open:not(.focus-mode) #workspace .status-select.done { color:#eafff9; border-color:rgba(78,205,177,.3); background:rgba(44,150,130,.52); }
+    body.workspace-open:not(.focus-mode) #workspace .bar { background:rgba(135,159,199,.18); box-shadow:inset 0 1px 2px rgba(0,0,0,.2); }
+    body.workspace-open:not(.focus-mode) #workspace .bar>i { background:linear-gradient(90deg,#53d8c4,#8377eb); box-shadow:0 0 10px rgba(83,216,196,.32); }
+    body.workspace-open:not(.focus-mode) #workspace .row-progress.complete .bar>i { background:linear-gradient(90deg,#5ae1c4,#49b996); }
+    body.workspace-open:not(.focus-mode) #workspace .percent { background:rgba(106,95,177,.34); color:#e0d8ff; }
+    body.workspace-open:not(.focus-mode) #workspace .save-state { color:#91a8c7; }
+    body.workspace-open:not(.focus-mode) #workspace .icon-button { border-color:rgba(144,183,229,.2); background:rgba(18,42,78,.62); color:#bca9fb; }
+    body.workspace-open:not(.focus-mode) #workspace .icon-button:hover { border-color:rgba(111,220,208,.52); background:rgba(49,69,119,.72); color:#78ded5; box-shadow:0 0 15px rgba(100,121,224,.16); }
+    body.workspace-open:not(.focus-mode) #workspace .delete-topic { color:#e88da8; }
+    body.workspace-open:not(.focus-mode) #workspace .foot { border-color:rgba(145,183,226,.14); color:#8fa5c4; }
+    body.workspace-open:not(.focus-mode) #workspace .empty { color:#a9bad2; }
+    @keyframes aurora-drift { from { transform:translate3d(-2%,0,0) scale(1); } to { transform:translate3d(3%,2%,0) scale(1.06); } }
+
+    @media (max-width: 1050px) { .toolbar { grid-template-columns: 1fr 1fr; } .toolbar input { grid-column: 1/-1; } body.workspace-open:not(.focus-mode) #workspace .dashboard{grid-template-columns:1fr 1fr} body.workspace-open:not(.focus-mode) #workspace .toolbar{grid-template-columns:1fr 1fr} body.workspace-open:not(.focus-mode) #workspace .toolbar input{grid-column:1/-1} }
     @media (max-width: 900px) { .shell { padding: 30px 18px 40px; } .dashboard{grid-template-columns:1fr;} }
     @media (max-width: 700px) { .focus-panel { grid-template-columns: auto 1fr; } .focus-actions { grid-column: 1/-1; } }
-    @media (max-width: 560px) { .auth-shell { padding: 12px; } .auth-card { padding: 25px 20px; border-radius: 21px; } .shell { padding: 24px 12px 32px; } .header { flex-direction: column; } .header-actions{width:100%;flex-wrap:wrap}.profile-chip{flex:1}.header .button { flex:1; } .toolbar { grid-template-columns: 1fr; } .toolbar input { grid-column: auto; } .panel { border-radius: 20px; } .section-picker { grid-template-columns: 1fr; } .modal { padding: 10px; } .modal-card { padding: 22px 18px; border-radius: 20px; } #profileModal .modal-card{max-height:calc(100dvh - 20px)} .modal-actions { flex-direction: column-reverse; } .modal-actions .button { width: 100%; } .toast { right: 16px; bottom: 16px; } .focus-panel { grid-template-columns: 1fr; text-align: center; } .crystal-scene { margin: auto; } .focus-clock,.focus-actions { justify-content: center; } .efficiency{grid-template-columns:74px 1fr}.eff-ring{width:72px;height:72px}.profile-grid{grid-template-columns:1fr;} }
+    @media (max-width: 700px) { body.workspace-open:not(.focus-mode) #workspace{width:calc(100% - 16px);margin:8px auto 20px;padding:18px 12px 22px;border-radius:18px} body.workspace-open:not(.focus-mode) #workspace .dashboard{grid-template-columns:1fr} }
+    @media (max-width: 560px) { .auth-shell { padding: 12px; } .auth-card { padding: 25px 20px; border-radius: 21px; } .shell { padding: 24px 12px 32px; } .header { flex-direction: column; } .header-actions{width:100%;flex-wrap:wrap}.profile-chip{flex:1}.header .button { flex:1; } .toolbar { grid-template-columns: 1fr; } .toolbar input { grid-column: auto; } .panel { border-radius: 20px; } .section-picker { grid-template-columns: 1fr; } .modal { padding: 10px; } .modal-card { padding: 22px 18px; border-radius: 20px; } #profileModal .modal-card{max-height:calc(100dvh - 20px)} .modal-actions { flex-direction: column-reverse; } .modal-actions .button { width: 100%; } .toast { right: 16px; bottom: 16px; } .focus-panel { grid-template-columns: 1fr; text-align: center; } .crystal-scene { margin: auto; } .focus-clock,.focus-actions { justify-content: center; } .efficiency{grid-template-columns:74px 1fr}.eff-ring{width:72px;height:72px}.profile-grid{grid-template-columns:1fr;} body.workspace-open:not(.focus-mode) #workspace .header{align-items:stretch} body.workspace-open:not(.focus-mode) #workspace .header-actions{display:grid;grid-template-columns:1fr auto} body.workspace-open:not(.focus-mode) #workspace .toolbar{grid-template-columns:1fr} body.workspace-open:not(.focus-mode) #workspace .toolbar input{grid-column:auto} body.workspace-open:not(.focus-mode) #workspace .dash-card{min-height:auto} }
   </style>
 </head>
 <body>

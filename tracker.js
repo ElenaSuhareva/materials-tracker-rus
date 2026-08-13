@@ -16,6 +16,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const stageFields = ["ruleNotes", "exerciseNotes", "board", "interactive", "homework"];
 const stageLabels = { ruleNotes: "Конспект темы", exerciseNotes: "Конспект заданий", board: "Доска", interactive: "Интерактив", homework: "ДЗ" };
+const eventTypeLabels = { material_ready:"Материал готов", "material ready":"Материал готов", quick_progress:"Быстрый результат", "quick progress":"Быстрый результат", focus_time:"Фокус-сессия завершена", focus_session:"Фокус-сессия завершена", "focus session":"Фокус-сессия завершена", task_completed:"Задача выполнена", "task completed":"Задача выполнена", topic_ready:"Тема полностью готова", topic_completed:"Тема полностью готова", "topic completed":"Тема полностью готова" };
 const scores = { "План": 0, "В работе": 50, "Готово": 100 };
 const elementIds = ["authLoading","loginView","workspace","loginForm","email","password","loginButton","loginError","logoutButton","workspaceError","search","sectionFilter","progressFilter","addTopicButton","rows","empty","count","topicModal","topicForm","topicModalTitle","topicModalIntro","topicSection","newSectionButton","newSectionField","newSectionName","topicRule","topicGrade","topicError","cancelTopicButton","saveTopicButton","deleteModal","deleteQuestion","deleteError","cancelDeleteButton","confirmDeleteButton","toast","focusPanel","focusTopic","focusMaterial","focusTimer","crystalScene","finishFocusButton","cancelFocusButton","focusStartModal","focusStartTopic","focusMaterials","cancelFocusStartButton","focusFinishModal","focusFinishForm","focusDuration","focusResult","focusFinishError","continueFocusButton","saveFocusButton","focusParticles","profileButton","profileInitial","profileAvatar","profileLargeInitial","profileLargeAvatar","profileName","coinBalance","headerCoinBalance","profileCoinBalance","efficiencyRing","efficiencyValue","efficiencyNote","dailyTasks","todayModal","todayTopic","todayMaterials","cancelTodayButton","profileModal","profileSubtitle","profileCoins","profileMinutes","profileSessions","historyList","closeProfileButton"];
 elementIds.push("crystalImage");
@@ -35,6 +36,7 @@ let focusTimerId = null;
 let profile = { displayName:"",coins:0,totalFocusMinutes:0,focusSessionsCount:0,completedTasksCount:0 };
 let dailyTasks = [];
 let rewardHistory = [];
+let focusSessionHistory = new Map();
 let pendingTodayItem = null;
 const encouragements = ["Отличная работа — ещё один шаг сделан.","Хороший темп. Продолжайте в своём ритме.","Маленький шаг тоже меняет общую картину.","Спокойно, последовательно, результативно.","Сегодняшний прогресс уже заметен.","Работа движется — это главное.","Прекрасно. Можно выбрать следующий шаг."];
 
@@ -90,6 +92,18 @@ function renderDailyTasks() {
   els.dailyTasks.innerHTML=dailyTasks.map(task=>`<div class="daily-task ${task.completed?"done":""}" data-id="${escapeHTML(task.id)}"><span>${task.completed?"✓":"○"}</span><div><b>${escapeHTML(task.topicTitle)}</b><small>${escapeHTML(task.materialLabel)}</small></div><span><button class="tiny-action task-focus" type="button" title="Начать фокус" aria-label="Начать фокус">▶</button> <button class="tiny-action task-remove" type="button" title="Убрать из плана" aria-label="Убрать из плана">×</button></span></div>`).join("");
 }
 function renderEfficiency() { const total=dailyTasks.length; const completed=dailyTasks.filter(task=>task.completed).length; const percent=total?Math.round(completed/total*100):0; els.efficiencyRing.style.setProperty("--value",percent); els.efficiencyValue.textContent=`${percent}%`; els.efficiencyNote.textContent=total?`Выполнено ${completed} из ${total} задач на сегодня.`:"Сегодняшних задач пока нет."; }
+function formatHistoryDuration(seconds) { const total=Math.max(0,Math.floor(Number(seconds)||0)); if(!total)return ""; if(total<60)return `${total} сек`; if(total<3600)return `${Math.floor(total/60)} мин`; const hours=Math.floor(total/3600); const minutes=Math.floor(total%3600/60); return minutes?`${hours} ч ${minutes} мин`:`${hours} ч`; }
+function formatHistoryDate(value) { const date=value?.toDate?.()||value; if(!(date instanceof Date)||Number.isNaN(date.getTime()))return ""; return new Intl.DateTimeFormat("ru-RU",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"}).format(date).replace(" в ",", "); }
+function historyDetails(event) {
+  const session=event.sessionId?focusSessionHistory.get(event.sessionId):null;
+  const material=materials.find(item=>item.documentId===event.materialDocumentId);
+  const task=event.taskId?dailyTasks.find(item=>item.id===event.taskId):null;
+  return { title:eventTypeLabels[event.eventType]||"Награда за работу", topic:event.topicTitle||session?.topicTitle||material?.rule||task?.topicTitle||"", material:stageLabels[event.materialField]||stageLabels[session?.materialField]||event.materialLabel||session?.materialLabel||"", duration:formatHistoryDuration(event.durationSeconds??session?.durationSeconds), date:formatHistoryDate(event.createdAt) };
+}
+function renderRewardHistory() {
+  if(!rewardHistory.length){ els.historyList.innerHTML='<p class="intro">История появится после завершённой работы.</p>'; return; }
+  els.historyList.innerHTML=rewardHistory.slice(0,30).map(item=>{ const details=historyDetails(item); const topic=details.topic?`<p>${escapeHTML(details.topic)}</p>`:""; const work=[details.material,details.duration].filter(Boolean).join(" · "); const workLine=work?`<p>${escapeHTML(work)}</p>`:""; const date=details.date?`<time>${escapeHTML(details.date)}</time>`:"<span></span>"; const hasCoins=Number.isFinite(Number(item.coins)); const coins=hasCoins?`<span class="coin-balance" aria-label="Начислено ${item.coins} монет"><img class="coin-icon" src="./assets/ui/coin.png" alt=""><span>+${item.coins} монет</span></span>`:""; return `<article class="history-item"><h4>${escapeHTML(details.title)}</h4>${topic}${workLine}<div class="history-meta">${date}${coins}</div></article>`; }).join("");
+}
 async function completeDailyTasks(materialDocumentId,materialField) {
   const date=localDate();
   const related=dailyTasks.filter(task=>task.date===date&&task.materialDocumentId===materialDocumentId&&task.materialField===materialField&&!task.completed);
@@ -114,8 +128,8 @@ async function ensureProfile() {
 }
 async function loadPersonalData() {
   await ensureProfile(); const date=localDate();
-  const [tasksSnap,rewardsSnap]=await Promise.all([getDocs(query(userPath("dailyTasks"),where("date","==",date))),getDocs(userPath("rewardEvents"))]);
-  dailyTasks=tasksSnap.docs.map(d=>({id:d.id,...d.data()})); rewardHistory=rewardsSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)); renderDailyTasks(); renderEfficiency(); updateProfileUI();
+  const [tasksSnap,rewardsSnap,sessionsSnap]=await Promise.all([getDocs(query(userPath("dailyTasks"),where("date","==",date))),getDocs(userPath("rewardEvents")),getDocs(userPath("focusSessions"))]);
+  dailyTasks=tasksSnap.docs.map(d=>({id:d.id,...d.data()})); rewardHistory=rewardsSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)); focusSessionHistory=new Map(sessionsSnap.docs.map(d=>[d.id,{id:d.id,...d.data()}])); renderDailyTasks(); renderEfficiency(); updateProfileUI();
 }
 async function awardCoins(eventKey,eventType,coins,details={}) {
   if (!coins) return 0; const eventRef=doc(db,"userProfiles",currentUser.uid,"rewardEvents",safeKey(eventKey)); const profileRef=doc(db,"userProfiles",currentUser.uid);
@@ -561,7 +575,7 @@ els.confirmDeleteButton.addEventListener("click",confirmDelete);
 els.cancelFocusStartButton.addEventListener("click",() => { els.focusStartModal.hidden = true; pendingFocusItem = null; });
 els.cancelTodayButton.addEventListener("click",()=>{ els.todayModal.hidden=true; pendingTodayItem=null; });
 els.todayMaterials.addEventListener("click",event=>{ const button=event.target.closest("[data-today-field]"); if(button) addToday(button.dataset.todayField); });
-els.profileButton.addEventListener("click",()=>{ els.historyList.innerHTML=rewardHistory.length?rewardHistory.slice(0,30).map(item=>`<div class="history-item"><span class="coin-balance" aria-label="Начислено ${item.coins} монет"><img class="coin-icon" src="./assets/ui/coin.png" alt=""><span>+${item.coins}</span></span><time>${item.createdAt?.toDate?.().toLocaleString("ru-RU")||"Недавно"}</time>${escapeHTML(item.eventType.replaceAll("_"," "))}</div>`).join(""):'<p class="intro">История появится после завершённой работы.</p>'; els.profileModal.hidden=false; });
+els.profileButton.addEventListener("click",()=>{ renderRewardHistory(); els.profileModal.hidden=false; });
 els.closeProfileButton.addEventListener("click",()=>{ els.profileModal.hidden=true; });
 els.dailyTasks.addEventListener("click",async event=>{ const card=event.target.closest(".daily-task"); const task=card&&dailyTasks.find(value=>value.id===card.dataset.id); if(!task)return; if(event.target.closest(".task-remove")){ await deleteDoc(doc(db,"userProfiles",currentUser.uid,"dailyTasks",task.id)); dailyTasks=dailyTasks.filter(value=>value.id!==task.id); renderDailyTasks(); renderEfficiency(); showToast("Убрано из плана на сегодня"); } if(event.target.closest(".task-focus")){ const item=materials.find(value=>value.documentId===task.materialDocumentId); if(item){ pendingFocusItem=item; beginFocus(task.materialField); } } });
 els.focusMaterials.addEventListener("click",event => { const choice = event.target.closest("[data-field]"); if (choice) beginFocus(choice.dataset.field); });

@@ -104,6 +104,8 @@ function renderRewardHistory() {
   if(!rewardHistory.length){ els.historyList.innerHTML='<p class="intro">История появится после завершённой работы.</p>'; return; }
   els.historyList.innerHTML=rewardHistory.slice(0,30).map(item=>{ const details=historyDetails(item); const topic=details.topic?`<p>${escapeHTML(details.topic)}</p>`:""; const work=[details.material,details.duration].filter(Boolean).join(" · "); const workLine=work?`<p>${escapeHTML(work)}</p>`:""; const date=details.date?`<time>${escapeHTML(details.date)}</time>`:"<span></span>"; const hasCoins=Number.isFinite(Number(item.coins)); const coins=hasCoins?`<span class="coin-balance" aria-label="Начислено ${item.coins} монет"><img class="coin-icon" src="./assets/ui/coin.png" alt=""><span>+${item.coins} монет</span></span>`:""; return `<article class="history-item"><h4>${escapeHTML(details.title)}</h4>${topic}${workLine}<div class="history-meta">${date}${coins}</div></article>`; }).join("");
 }
+function openProfile() { renderRewardHistory(); document.body.classList.add("profile-open"); els.profileModal.hidden=false; els.closeProfileButton.focus(); }
+function closeProfile() { els.profileModal.hidden=true; document.body.classList.remove("profile-open"); els.profileButton.focus(); }
 async function completeDailyTasks(materialDocumentId,materialField) {
   const date=localDate();
   const related=dailyTasks.filter(task=>task.date===date&&task.materialDocumentId===materialDocumentId&&task.materialField===materialField&&!task.completed);
@@ -560,7 +562,7 @@ onAuthStateChanged(auth,user => {
   els.workspace.hidden = !user;
   els.loginError.textContent = "";
   if (user) loadWorkspaceData();
-  else { loadSequence++; materials = []; sections = []; els.rows.innerHTML = ""; els.topicModal.hidden = true; els.deleteModal.hidden = true; els.focusStartModal.hidden = true; els.focusFinishModal.hidden = true; document.body.classList.remove("focus-mode"); els.focusPanel.hidden = true; els.focusParticles.hidden = true; window.clearInterval(focusTimerId); }
+  else { loadSequence++; materials = []; sections = []; els.rows.innerHTML = ""; els.topicModal.hidden = true; els.deleteModal.hidden = true; els.focusStartModal.hidden = true; els.focusFinishModal.hidden = true; els.profileModal.hidden = true; document.body.classList.remove("focus-mode","profile-open"); els.focusPanel.hidden = true; els.focusParticles.hidden = true; window.clearInterval(focusTimerId); }
 });
 
 els.loginForm.addEventListener("submit",async event => { event.preventDefault(); els.loginError.textContent = ""; els.loginButton.disabled = true; els.loginButton.textContent = "Вхожу…"; try { await signInWithEmailAndPassword(auth,els.email.value.trim(),els.password.value); els.loginForm.reset(); } catch (error) { els.loginError.textContent = loginErrorMessage(error); } finally { els.loginButton.disabled = false; els.loginButton.textContent = "Войти"; } });
@@ -575,8 +577,8 @@ els.confirmDeleteButton.addEventListener("click",confirmDelete);
 els.cancelFocusStartButton.addEventListener("click",() => { els.focusStartModal.hidden = true; pendingFocusItem = null; });
 els.cancelTodayButton.addEventListener("click",()=>{ els.todayModal.hidden=true; pendingTodayItem=null; });
 els.todayMaterials.addEventListener("click",event=>{ const button=event.target.closest("[data-today-field]"); if(button) addToday(button.dataset.todayField); });
-els.profileButton.addEventListener("click",()=>{ renderRewardHistory(); els.profileModal.hidden=false; });
-els.closeProfileButton.addEventListener("click",()=>{ els.profileModal.hidden=true; });
+els.profileButton.addEventListener("click",openProfile);
+els.closeProfileButton.addEventListener("click",closeProfile);
 els.dailyTasks.addEventListener("click",async event=>{ const card=event.target.closest(".daily-task"); const task=card&&dailyTasks.find(value=>value.id===card.dataset.id); if(!task)return; if(event.target.closest(".task-remove")){ await deleteDoc(doc(db,"userProfiles",currentUser.uid,"dailyTasks",task.id)); dailyTasks=dailyTasks.filter(value=>value.id!==task.id); renderDailyTasks(); renderEfficiency(); showToast("Убрано из плана на сегодня"); } if(event.target.closest(".task-focus")){ const item=materials.find(value=>value.documentId===task.materialDocumentId); if(item){ pendingFocusItem=item; beginFocus(task.materialField); } } });
 els.focusMaterials.addEventListener("click",event => { const choice = event.target.closest("[data-field]"); if (choice) beginFocus(choice.dataset.field); });
 els.finishFocusButton.addEventListener("click",openFocusFinish);
@@ -593,4 +595,4 @@ els.rows.addEventListener("click",event => {
   if (event.target.closest(".edit-topic")) openTopicModal(item);
   if (event.target.closest(".delete-topic")) openDeleteModal(item);
 });
-document.addEventListener("keydown",event => { if (event.key === "Escape") { if (!els.focusFinishModal.hidden) continueFocus(); else if (!els.focusStartModal.hidden) { els.focusStartModal.hidden = true; pendingFocusItem = null; } else if (!els.todayModal.hidden) els.todayModal.hidden=true; else if(!els.profileModal.hidden) els.profileModal.hidden=true; else if (!els.topicModal.hidden) closeTopicModal(); else if (!els.deleteModal.hidden) closeDeleteModal(); } });
+document.addEventListener("keydown",event => { if (event.key === "Escape") { if (!els.focusFinishModal.hidden) continueFocus(); else if (!els.focusStartModal.hidden) { els.focusStartModal.hidden = true; pendingFocusItem = null; } else if (!els.todayModal.hidden) els.todayModal.hidden=true; else if(!els.profileModal.hidden) closeProfile(); else if (!els.topicModal.hidden) closeTopicModal(); else if (!els.deleteModal.hidden) closeDeleteModal(); } });

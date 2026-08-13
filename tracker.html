@@ -109,8 +109,8 @@
     .action-buttons { display: inline-flex; align-items: center; gap: 9px; }
     .icon-button { width: 36px; height: 36px; display: inline-grid; place-items: center; border: 1px solid var(--line); border-radius: 11px; background: #fff; color: var(--accent-dark); font-size: 17px; cursor: pointer; transition: transform .18s, background .18s, border-color .18s; }
     .icon-button:hover { transform: translateY(-1px); border-color: #cfc5e1; background: var(--accent-soft); }
-    .focus-button { margin-right: 5px; border-color: #cce7dc; background: #eef9f4; color: var(--done); }
-    .pencil-icon { display: inline-block; transform: rotate(-12deg); }
+    .icon-button svg { width:19px; height:19px; display:block; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .pencil-icon { display: inline-block; transform: scaleX(-1) rotate(-12deg); }
     body.focus-mode::before { content: ""; position: fixed; inset: 0; z-index: -1; background: rgba(39,34,56,.12); pointer-events: none; transition: opacity .5s; }
     .focus-particles { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
     .focus-particles i { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: rgba(167,231,207,.32); filter: blur(1px); animation: drift 12s ease-in-out infinite alternate; }
